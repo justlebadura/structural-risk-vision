@@ -1,0 +1,13 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Modelos (se entrenan/descargan en sprint 2; no versionar binarios pesados)
+backend/models/*.tflite
+!backend/models/.gitkeep
+
+# Entorno
+.env
