@@ -11,3 +11,4 @@ backend/models/*.tflite
 
 # Entorno
 .env
+!.env.example

@@ -5,3 +5,5 @@ numpy>=1.26
 opencv-python>=4.9
 pydantic>=2.7
 tflite-runtime>=2.14
+# Solo necesario para el entrenamiento del filtro (endpoints /api/training/*).
+tensorflow>=2.16

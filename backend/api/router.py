@@ -8,7 +8,7 @@ from __future__ import annotations
 import uuid
 from typing import Optional
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, File, HTTPException, Query, UploadFile
 
 from core import config
 from core.schemas import (
@@ -16,10 +16,13 @@ from core.schemas import (
     CameraStatus,
     CaptureRequest,
     FilterResult,
+    ModelInfo,
     PreprocessResult,
     AnalyzeResponse,
+    TrainingConfig,
+    TrainingStatus,
 )
-from services import aruco, camera, filter as filter_svc, preprocess
+from services import aruco, camera, filter as filter_svc, preprocess, training
 
 router = APIRouter(prefix="/api", tags=["api"])
 
@@ -43,10 +46,70 @@ def health() -> dict:
     model = get_filter_model()
     return {
         "status": "ok",
+        "mode": config.APP_MODE,
+        "filter_backend": model.backend,
         "sections": {"1_captura": True, "2_preprocesamiento": True, "3_filtro": True},
         "filter_model": "loaded" if model.present else "pending",
         "filter_model_path": str(config.FILTER_MODEL_PATH),
     }
+
+
+# ---------------------------------------------------------------------------
+# Modelo y entrenamiento del filtro binario
+# ---------------------------------------------------------------------------
+@router.get("/model/status", response_model=ModelInfo)
+def model_status() -> ModelInfo:
+    from core.model_loader import get_filter_model
+
+    model = get_filter_model()
+    size = None
+    if config.FILTER_MODEL_PATH.exists():
+        size = config.FILTER_MODEL_PATH.stat().st_size
+    return ModelInfo(
+        mode=config.APP_MODE,
+        backend=model.backend,
+        model_present=model.present,
+        model_path=str(config.FILTER_MODEL_PATH),
+        size_bytes=size,
+    )
+
+
+@router.post("/model/upload", response_model=ModelInfo)
+async def model_upload(file: UploadFile = File(...)) -> ModelInfo:
+    """Sube un modelo .tflite entrenado y lo recarga como filtro real."""
+    if not file.filename or not file.filename.endswith(".tflite"):
+        raise HTTPException(status_code=400, detail="El archivo debe ser un .tflite.")
+
+    config.MODELS_DIR.mkdir(parents=True, exist_ok=True)
+    data = await file.read()
+    config.FILTER_MODEL_PATH.write_bytes(data)
+
+    from core.model_loader import reload_filter_model
+
+    model = reload_filter_model()
+    return ModelInfo(
+        mode=config.APP_MODE,
+        backend=model.backend,
+        model_present=model.present,
+        model_path=str(config.FILTER_MODEL_PATH),
+        size_bytes=len(data),
+    )
+
+
+@router.get("/training/status", response_model=TrainingStatus)
+def training_status() -> TrainingStatus:
+    return TrainingStatus(**training.get_training_service().status())
+
+
+@router.post("/training/start", response_model=TrainingStatus)
+def training_start(cfg: Optional[TrainingConfig] = None) -> TrainingStatus:
+    params = cfg.dict(exclude_none=True) if cfg else {}
+    return TrainingStatus(**training.get_training_service().start(params))
+
+
+@router.post("/training/stop", response_model=TrainingStatus)
+def training_stop() -> TrainingStatus:
+    return TrainingStatus(**training.get_training_service().stop())
 
 
 # ---------------------------------------------------------------------------

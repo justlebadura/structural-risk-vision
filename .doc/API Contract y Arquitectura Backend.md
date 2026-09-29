@@ -63,7 +63,8 @@ Se implementan las **secciones 1 a 3** del *Documento de Arquitectura Optimizada
 cd backend
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-uvicorn app:app --reload --port 8000
+# --host 0.0.0.0 expone la API a la red local (necesario para la app móvil)
+uvicorn app:app --host 0.0.0.0 --port 8000
 ```
 
 - Documentación interactiva: http://localhost:8000/docs
@@ -98,7 +99,12 @@ Todas las rutas bajo `/api`. Las imágenes se envían como **base64** en el cuer
 | `POST` | `/api/aruco/detect` | Detecta ArUco, homografía y escala | No |
 | `POST` | `/api/preprocess` | Vista cenital + parches | No |
 | `POST` | `/api/filter` | Clasificación binaria por parches | No |
-| `POST` | `/api/analyze` | **Pipeline completo 1→3** en un solo call | No |
+| `POST` | `/api/analyze` | **Pipeline completo 1→3** en un solo call |
+| `GET` | `/api/model/status` | Estado y backend del filtro |
+| `POST` | `/api/model/upload` | Subir `.tflite` entrenado |
+| `GET` | `/api/training/status` | Estado del entrenamiento |
+| `POST` | `/api/training/start` | Iniciar entrenamiento |
+| `POST` | `/api/training/stop` | Detener entrenamiento | No |
 
 ### Ejemplos de respuesta
 
@@ -145,8 +151,42 @@ Todas las rutas bajo `/api`. Las imágenes se envían como **base64** en el cuer
 }
 ```
 
-> Cuando el modelo esté entrenado (sprint 2), `filter` devolverá `model_present: true`,
-> `verdict: "GRIETA" | "NO_GRIETA"`, `confidence` y la lista de parches clasificados.
+> El `verdict` del filtro ahora depende del **APP_MODE** (ver sección de modos):
+> - `demo` → `verdict: "GRIETA" | "NO_GRIETA"` con `backend: "heuristic_demo"`.
+> - `funcional` con modelo → `verdict` real con `backend: "tflite"`.
+> - `funcional` sin modelo → `verdict: "SIN_MODELO"` con `backend: "none"` (claro, no falla).
+
+---
+
+## 4b. Modos de ejecución (`APP_MODE` en `.env`)
+
+El backend lee `APP_MODE` desde el archivo `.env` en la **raíz del proyecto**:
+
+| Valor | Comportamiento del filtro (Sección 3) |
+| :-- | :-- |
+| `demo` (por defecto) | Filtro **heurístico** (gradiente/textura, OpenCV). Sin modelo, listo para debugging de UI y pipeline. |
+| `funcional` | Inferencia real con `backend/models/filter.tflite`. |
+
+Copia `.env.example` a `.env` para ajustarlo. En `funcional` sin `.tflite`, el
+backend reporta `backend: "none"` y `verdict: "SIN_MODELO"` de forma explícita.
+
+## 4c. Endpoints de modelo y entrenamiento
+
+| Método | Ruta | Función |
+| :-- | :-- | :-- |
+| `GET` | `/api/model/status` | Estado y backend del filtro (`mode`, `backend`, `size_bytes`) |
+| `POST` | `/api/model/upload` | Sube un `.tflite` entrenado (multipart `file`) y lo recarga |
+| `GET` | `/api/training/status` | Estado del entrenamiento (`idle/running/done/error`) + métricas |
+| `POST` | `/api/training/start` | Inicia entrenamiento en segundo plano (opcional `TrainingConfig`) |
+| `POST` | `/api/training/stop` | Detiene el entrenamiento en curso |
+
+**`POST /api/training/start`** body (opcional):
+```json
+{ "dataset_dir": "/ruta/a/positive-y-negative", "epochs": 10, "batch_size": 32, "lr": 0.0001 }
+```
+El dataset debe contener `positive/*.jpg` y `negative/*.jpg`. Entrena MobileNetV2
+(transfer learning), exporta `filter.tflite` y lo recarga. Si falta el dataset o
+TensorFlow, el estado pasa a `error` con un mensaje claro.
 
 ---
 
@@ -193,8 +233,19 @@ Servidor → cliente (eventos de progreso y resultado final):
    - `preprocess.cenital_image` → mostrar la vista corregida.
    - `filter.verdict` y `filter.confidence` → mostrar si hay grieta.
 
-**En Sprint 1** el filtro estará en `SIN_MODELO` hasta que se entrene el peso (Sprint 2); el resto
-del pipeline (ArUco, escala, parches) ya funciona con datos reales.
+**El `verdict` del filtro depende del modo (`.env` → `APP_MODE`):** en `demo` el filtro
+heurístico devuelve `GRIETA/NO_GRIETA` para debugging; en `funcional` requiere el `.tflite`
+entrenado. El resto del pipeline (ArUco, escala, parches) funciona igual en ambos modos.
+
+### Integración con la app móvil (`app_grietas/`)
+
+La app Expo/React Native (`App.tsx`) consume **`POST /api/analyze` con JSON base64** (no multipart):
+
+1. El backend debe ejecutarse con `--host 0.0.0.0` para que el celular lo alcance.
+2. En `App.tsx` fija `API_URL` a la **IP LAN real** del equipo (ej. `http://192.168.1.27:8000/api/analyze`).
+3. Envía `{ "image": "<data-url base64>", "sensor": {...} }` con `Content-Type: application/json`.
+4. Renderiza `aruco` (marcador/escala), `preprocess.cenital_image` (vista corregida) y
+   `filter.verdict/confidence` (veredicto del filtro).
 
 ---
 
@@ -223,6 +274,7 @@ backend/
     aruco.py                 # detección ArUco, homografía, escala cm/px (Sección 2)
     preprocess.py            # vista cenital + parches 64x64 (Sección 2)
     filter.py                # clasificación binaria por parches (Sección 3)
+    training.py              # entrenamiento MobileNetV2 -> .tflite (servicio)
     images.py                # utilidades base64<->imagen
   api/
     router.py                # endpoints REST (/api)

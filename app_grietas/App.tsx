@@ -19,16 +19,35 @@ import { Ionicons } from '@expo/vector-icons';
 const { width } = Dimensions.get('window');
 const FRAME_SIZE = width * 0.75;
 
-// Endpoint HTTP de tu API local
-const API_URL = 'http://192.168.1.27:8000/api/v1/cracks/analyze';
+// Endpoint HTTP de la API backend (pipeline secciones 1-3, JSON base64)
+// Reemplaza la IP por la IP LAN real del equipo que corre el backend.
+const API_URL = 'http://192.168.1.27:8000/api/analyze';
 
-// Modelo de datos mapeado a la salida de tu arquitectura backend
+// Modelo de datos mapeado a la respuesta de /api/analyze (secciones 1-3)
 interface InspectionReport {
-  severity?: string; // ej: "Nivel 3 (Grave)"
-  confidence?: number; // ej: 0.89
-  heatmap_base64?: string; // Imagen del mapa de calor de grosor de grieta en base64
-  crack_type?: string;
-  recommendations?: string[];
+  job_id?: string;
+  aruco?: {
+    detected: boolean;
+    marker_id?: number | null;
+    scale_cm_per_px?: number | null;
+    orientation?: string | null;
+    stability?: string | null;
+    message?: string | null;
+  };
+  preprocess?: {
+    cenital_image?: string | null;
+    width_cm?: number | null;
+    height_cm?: number | null;
+    total_patches?: number | null;
+  } | null;
+  filter?: {
+    verdict: string;
+    confidence?: number | null;
+    model_present?: boolean;
+    total_patches?: number;
+    crack_patches?: number;
+    no_crack_patches?: number;
+  } | null;
 }
 
 export default function App() {
@@ -72,8 +91,7 @@ export default function App() {
     );
   }
 
-  // Captura de fotografía y envío al Endpoint
-// Función de captura conectada al endpoint real de FastAPI
+  // Captura de fotografía y envío al backend (/api/analyze)
   const handleTakePicture = async () => {
     if (cameraRef.current && !isProcessing) {
       try {
@@ -84,21 +102,25 @@ export default function App() {
           quality: 0.8,
         });
 
-        // 2. Preparar el archivo para enviarlo como multipart/form-data
-        const formData = new FormData();
-        formData.append('image', {
-          uri: photo.uri,
-          name: 'crack_analysis.jpg',
-          type: 'image/jpeg',
-        } as any);
+        // 2. Convertir el archivo a base64 (data URL) para el contrato JSON del backend
+        const blob = await (await fetch(photo.uri)).blob();
+        const base64 = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+        });
 
-        // 3. Petición POST a tu API en la red local
-        const response = await fetch('http://192.168.1.27:8000/api/v1/cracks/analyze', {
+        // 3. Petición POST a la API local (JSON base64)
+        const response = await fetch(API_URL, {
           method: 'POST',
-          body: formData,
           headers: {
-            'Content-Type': 'multipart/form-data',
+            'Content-Type': 'application/json',
           },
+          body: JSON.stringify({
+            image: base64,
+            sensor: { rotation: [0, 0, 0], accel: [0, 0, 9.8] },
+          }),
         });
 
         if (!response.ok) {
@@ -193,25 +215,54 @@ export default function App() {
             <ScrollView contentContainerStyle={{ alignItems: 'center' }}>
               <Text style={styles.resultHeader}>Resultados de Inspección</Text>
 
-              {/* Muestra la severidad devuelta por la red ResNet18 */}
+              {/* Veredicto del filtro rápido (Sección 3) */}
               <View style={styles.badgeSeverity}>
                 <Text style={styles.badgeSeverityText}>
-                  Severidad: {report?.severity || 'Nivel Desconocido'}
+                  {report?.filter?.verdict === 'GRIETA'
+                    ? 'Se detectó grieta'
+                    : report?.filter?.verdict === 'NO_GRIETA'
+                    ? 'Superficie sana (sin grieta)'
+                    : 'Pendiente de modelo'}
                 </Text>
               </View>
 
-              {report?.confidence !== undefined && (
+              {/* Confianza (proporción de parches con grieta) */}
+              {report?.filter?.confidence != null && (
                 <Text style={styles.resultDetail}>
-                  Probabilidad (Softmax): {(report.confidence * 100).toFixed(1)}%
+                  Confianza: {(report.filter.confidence * 100).toFixed(1)}%
                 </Text>
               )}
 
-              {/* Render del Mapa de Calor si el backend devuelve la imagen procesada */}
-              {report?.heatmap_base64 && (
+              {/* Estado del marcador ArUco (Sección 2) */}
+              {report?.aruco && (
+                <View style={styles.infoBlock}>
+                  <Text style={styles.infoTitle}>Marcador ArUco</Text>
+                  <Text style={styles.infoText}>
+                    {report.aruco.detected
+                      ? `Detectado (id ${report.aruco.marker_id}) · escala ${report.aruco.scale_cm_per_px?.toFixed(4)} cm/px · ${report.aruco.orientation}`
+                      : report.aruco.message || 'No se detectó marcador'}
+                  </Text>
+                </View>
+              )}
+
+              {/* Estadísticas de parches (Sección 3) */}
+              {report?.filter && (
+                <View style={styles.infoBlock}>
+                  <Text style={styles.infoTitle}>Parches analizados</Text>
+                  <Text style={styles.infoText}>
+                    {report.filter.total_patches ?? 0} total ·{' '}
+                    {report.filter.crack_patches ?? 0} con grieta ·{' '}
+                    {report.filter.no_crack_patches ?? 0} sanos
+                  </Text>
+                </View>
+              )}
+
+              {/* Vista cenital corregida (Sección 2) */}
+              {report?.preprocess?.cenital_image && (
                 <View style={styles.heatmapContainer}>
-                  <Text style={styles.heatmapTitle}>Mapa de Calor de Grosor:</Text>
+                  <Text style={styles.heatmapTitle}>Vista corregida (cenital):</Text>
                   <Image
-                    source={{ uri: `data:image/jpeg;base64,${report.heatmap_base64}` }}
+                    source={{ uri: report.preprocess.cenital_image }}
                     style={styles.heatmapImage}
                     resizeMode="contain"
                   />
@@ -444,6 +495,26 @@ const styles = StyleSheet.create({
     color: '#8B949E',
     fontSize: 13,
     marginBottom: 16,
+  },
+  infoBlock: {
+    width: '100%',
+    backgroundColor: '#21262D',
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#30363D',
+  },
+  infoTitle: {
+    color: '#C9D1D9',
+    fontSize: 12,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  infoText: {
+    color: '#8B949E',
+    fontSize: 13,
+    lineHeight: 18,
   },
   heatmapContainer: {
     width: '100%',

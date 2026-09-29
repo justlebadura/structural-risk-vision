@@ -22,14 +22,16 @@ def classify_patches(
 ) -> dict:
     """Clasifica cada parche y agrega el resultado del filtro.
 
-    Si el modelo .tflite aún no está entrenado (sprint 2), se reporta
-    model_present=False y verdict="SIN_MODELO" (nunca un mock silencioso).
+    El modelo responde siempre (backend "tflite" en modo funcional o
+    "heuristic_demo" en modo demo). El modo lo define APP_MODE en `.env`.
     """
     model = get_filter_model()
 
     if not model.present:
+        # Solo ocurre en modo "funcional" sin .tflite desplegado.
         return {
             "implemented": True,
+            "backend": model.backend,
             "model_present": False,
             "total_patches": len(patches),
             "crack_patches": 0,
@@ -37,7 +39,10 @@ def classify_patches(
             "verdict": "SIN_MODELO",
             "confidence": None,
             "patches": [],
-            "message": "Modelo del filtro no cargado (entrenar peso en sprint 2).",
+            "message": (
+                f"Modo '{config.APP_MODE}' sin modelo en {config.FILTER_MODEL_PATH}. "
+                "Entrena/despliega el .tflite o usa APP_MODE=demo."
+            ),
         }
 
     results = []
@@ -60,6 +65,7 @@ def classify_patches(
     verdict = "GRIETA" if ratio > 0 else "NO_GRIETA"
     return {
         "implemented": True,
+        "backend": model.backend,
         "model_present": True,
         "total_patches": len(results),
         "crack_patches": crack_count,

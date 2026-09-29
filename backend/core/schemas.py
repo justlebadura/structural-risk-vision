@@ -65,12 +65,41 @@ class PatchResult(BaseModel):
 class FilterResult(BaseModel):
     implemented: bool                # True si el .tflite está cargado
     model_present: bool              # True si existe el archivo .tflite
+    backend: Optional[str] = None    # tflite | heuristic_demo | none
     total_patches: int
     crack_patches: int
     no_crack_patches: int
     verdict: str                     # "GRIETA" | "NO_GRIETA" | "SIN_MODELO"
     confidence: Optional[float] = None
     patches: List[PatchResult] = []
+
+
+# ---------------------------------------------------------------------------
+# Entrenamiento del filtro binario
+# ---------------------------------------------------------------------------
+class TrainingConfig(BaseModel):
+    dataset_dir: Optional[str] = None
+    epochs: Optional[int] = None
+    batch_size: Optional[int] = None
+    lr: Optional[float] = None
+
+
+class TrainingStatus(BaseModel):
+    state: str                       # idle | running | done | error
+    metrics: dict = {}
+    params: dict = {}
+    model_path: str
+    message: Optional[str] = None
+    started_at: Optional[str] = None
+    finished_at: Optional[str] = None
+
+
+class ModelInfo(BaseModel):
+    mode: str                        # demo | funcional
+    backend: str                     # tflite | heuristic_demo | none
+    model_present: bool
+    model_path: str
+    size_bytes: Optional[int] = None
 
 
 # ---------------------------------------------------------------------------
