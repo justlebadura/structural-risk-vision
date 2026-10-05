@@ -31,12 +31,14 @@ arquitecturas** y se despliega la más ligera.
 | Baseline alterna | MobileNetV2 (transfer learning, `alpha=0.35`) |
 
 **Resultados** (test METU balanceado): comparación completa, matrices de
-confusión y métricas en [`stats_modelo_binario.md`](stats_modelo_binario.md);
-cifras de titular en [`../datos/cifras_clave.md`](../datos/cifras_clave.md).
+confusión y métricas en [`stats_modelo_binario.md`](stats_modelo_binario.md) —
+que además incluye la **selección de época** (mejor `val_auc`), si hubo
+**early stopping** y el **diagnóstico de under/overfitting** con curvas
+train/val. Cifras de titular en [`../datos/cifras_clave.md`](../datos/cifras_clave.md).
 
 - Si `filter.tflite` **no existe**, el backend responde `model_present=false` y
   `verdict="SIN_MODELO"` (nunca un mock silencioso).
-- Entrenamiento: `backend/model/model_binary/train.py` (ver su `README.md`).
+- Entrenamiento y evaluación: [`../guias/entrenamiento.md`](../guias/entrenamiento.md).
 
 ## Modelo segmentador (`model_segmentator`)
 
