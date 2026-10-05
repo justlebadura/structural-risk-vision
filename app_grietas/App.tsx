@@ -19,16 +19,33 @@ import { Ionicons } from '@expo/vector-icons';
 const { width } = Dimensions.get('window');
 const FRAME_SIZE = width * 0.75;
 
-// Endpoint HTTP de tu API local
-const API_URL = 'http://192.168.1.27:8000/api/v1/cracks/analyze';
+// Endpoint HTTP de tu API local. Configurable vía EXPO_PUBLIC_API_URL.
+const API_BASE = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.27:8000';
+const API_URL = `${API_BASE}/api/analyze`;
 
-// Modelo de datos mapeado a la salida de tu arquitectura backend
+// Modelo de datos mapeado a la salida real del backend (core/schemas.py).
 interface InspectionReport {
-  severity?: string; // ej: "Nivel 3 (Grave)"
-  confidence?: number; // ej: 0.89
-  heatmap_base64?: string; // Imagen del mapa de calor de grosor de grieta en base64
-  crack_type?: string;
-  recommendations?: string[];
+  job_id?: string;
+  aruco?: {
+    detected: boolean;
+    marker_id?: number | null;
+    scale_cm_per_px?: number | null;
+    stability?: string | null;
+    message?: string | null;
+  };
+  preprocess?: {
+    cenital_image?: string | null;
+    width_cm?: number | null;
+    height_cm?: number | null;
+    scale_cm_per_px?: number | null;
+    total_patches?: number | null;
+  };
+  filter?: {
+    verdict?: string | null;
+    confidence?: number | null;
+    total_patches?: number;
+    crack_patches?: number;
+  };
 }
 
 export default function App() {
@@ -79,26 +96,23 @@ export default function App() {
       try {
         setIsProcessing(true);
 
-        // 1. Capturar la fotografía desde el visor
+        // 1. Capturar la fotografía desde el visor (base64 incluido)
         const photo = await cameraRef.current.takePictureAsync({
           quality: 0.8,
+          base64: true,
         });
 
-        // 2. Preparar el archivo para enviarlo como multipart/form-data
-        const formData = new FormData();
-        formData.append('image', {
-          uri: photo.uri,
-          name: 'crack_analysis.jpg',
-          type: 'image/jpeg',
-        } as any);
+        if (!photo.base64) {
+          throw new Error('No se pudo codificar la imagen a base64.');
+        }
 
-        // 3. Petición POST a tu API en la red local
-        const response = await fetch('http://192.168.1.27:8000/api/v1/cracks/analyze', {
+        // 2. El backend espera la imagen como base64 en un body JSON
+        const response = await fetch(API_URL, {
           method: 'POST',
-          body: formData,
           headers: {
-            'Content-Type': 'multipart/form-data',
+            'Content-Type': 'application/json',
           },
+          body: JSON.stringify({ image: photo.base64 }),
         });
 
         if (!response.ok) {
@@ -191,27 +205,38 @@ export default function App() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
             <ScrollView contentContainerStyle={{ alignItems: 'center' }}>
-              <Text style={styles.resultHeader}>Resultados de Inspección</Text>
+              <View style={styles.resultHeader}>
+                <Text style={styles.resultHeaderText}>Resultados de Inspección</Text>
+                {report?.aruco?.detected === false && (
+                  <Text style={styles.resultDetail}>{report.aruco.message}</Text>
+                )}
+              </View>
 
-              {/* Muestra la severidad devuelta por la red ResNet18 */}
+              {/* Severidad según el veredicto del filtro binario */}
               <View style={styles.badgeSeverity}>
                 <Text style={styles.badgeSeverityText}>
-                  Severidad: {report?.severity || 'Nivel Desconocido'}
+                  Veredicto: {report?.filter?.verdict || 'SIN_MODELO'}
                 </Text>
               </View>
 
-              {report?.confidence !== undefined && (
+              {report?.filter?.confidence !== undefined && report.filter.confidence !== null && (
                 <Text style={styles.resultDetail}>
-                  Probabilidad (Softmax): {(report.confidence * 100).toFixed(1)}%
+                  Fracción de parches con grieta: {(report.filter.confidence * 100).toFixed(1)}%
                 </Text>
               )}
 
-              {/* Render del Mapa de Calor si el backend devuelve la imagen procesada */}
-              {report?.heatmap_base64 && (
+              {report?.aruco?.scale_cm_per_px !== undefined && report.aruco.scale_cm_per_px !== null && (
+                <Text style={styles.resultDetail}>
+                  Escala: {report.aruco.scale_cm_per_px.toFixed(3)} cm/píxel
+                </Text>
+              )}
+
+              {/* Render de la vista cenital corregida si el backend la devuelve */}
+              {report?.preprocess?.cenital_image && (
                 <View style={styles.heatmapContainer}>
-                  <Text style={styles.heatmapTitle}>Mapa de Calor de Grosor:</Text>
+                  <Text style={styles.heatmapTitle}>Vista Cenital Corregida:</Text>
                   <Image
-                    source={{ uri: `data:image/jpeg;base64,${report.heatmap_base64}` }}
+                    source={{ uri: `data:image/jpeg;base64,${report.preprocess.cenital_image}` }}
                     style={styles.heatmapImage}
                     resizeMode="contain"
                   />
@@ -421,10 +446,14 @@ const styles = StyleSheet.create({
     borderColor: '#30363D',
   },
   resultHeader: {
+    marginBottom: 12,
+    alignItems: 'center',
+  },
+  resultHeaderText: {
     fontSize: 18,
     fontWeight: '700',
     color: '#FFFFFF',
-    marginBottom: 12,
+    textAlign: 'center',
   },
   badgeSeverity: {
     paddingHorizontal: 16,
