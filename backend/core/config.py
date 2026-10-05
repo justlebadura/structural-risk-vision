@@ -66,6 +66,14 @@ MARKER_DICT_ID = 6           # Diccionario ArUco por defecto (DICT_5X5_250 = 6)
 REAL_MARKER_SIZE_CM = 5.0    # Tamaño real del lado del marcador en cm
 MAX_STABILITY_DEVIATION = 0.5  # Desviación tol. del giroscopio para "estable" (rad/s)
 
+# Orientación de la superficie a partir del acelerómetro (gravedad en el marco del dispositivo).
+# |az| dominante → superficie horizontal; |az| pequeño → vertical (pared).
+SURFACE_HORIZONTAL_AZ = 0.7  # |az| normalizado > este valor → techo/piso
+SURFACE_VERTICAL_AZ = 0.3    # |az| normalizado < este valor → pared
+
+# Ángulo máximo de inclinación del marcador para considerar la captura "cenital".
+MAX_TILT_DEG = 35.0
+
 # ---------------------------------------------------------------------------
 # Preprocesamiento (Sección 2)
 # ---------------------------------------------------------------------------

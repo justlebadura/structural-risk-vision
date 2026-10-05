@@ -41,8 +41,8 @@ structural-risk-vision/
 │   │   ├── schemas.py          # contratos Pydantic de la API
 │   │   └── model_loader.py     # puente hacia los modelos (singleton)
 │   ├── services/
-│   │   ├── aruco.py            # sección 2: detección ArUco + homografía
-│   │   ├── camera.py           # sección 1: sesión de cámara / estabilidad
+│   │   ├── aruco.py            # sección 2: ArUco + ángulo + homografía (cenital)
+│   │   ├── camera.py           # sección 1: estabilidad (giróscopo) + superficie (acelerómetro)
 │   │   ├── preprocess.py       # sección 2: vista cenital, parches 64x64
 │   │   ├── filter.py           # sección 3: clasificación binaria por parches
 │   │   ├── images.py           # codificar/decodificar base64
@@ -52,12 +52,12 @@ structural-risk-vision/
 │   │   └── model_segmentator/  # segmentador (placeholder, sprint 3)
 │   └── requirements.txt
 ├── frontend/                   # App móvil Expo / React Native
-│   ├── App.tsx                 # entrypoint mínimo
+│   ├── App.tsx                 # navegación mínima (menú → ubicación → cámara)
 │   └── src/
-│       ├── api/inspect.ts      # cliente HTTP hacia /api/analyze
+│       ├── api/inspect.ts      # cliente HTTP hacia /api/analyze (+ sensores/contexto)
 │       ├── components/         # PermissionView, CameraOverlay, ShutterButton, ResultModal
-│       ├── constants/layout.ts
-│       ├── screens/CameraScreen.tsx
+│       ├── constants/          # layout.ts, inspection.ts (elementos estructurales)
+│       ├── screens/            # MenuScreen, LocationScreen, CameraScreen
 │       ├── theme/colors.ts
 │       └── types/inspection.ts # tipos del reporte
 ├── EDA/
@@ -68,14 +68,20 @@ structural-risk-vision/
 
 ## Pipeline de datos (secciones 1–3)
 
-1. **Captura** — El frontend captura un frame (base64) + datos del giróscopo.
-2. **ArUco** — `services/aruco.py` detecta el marcador y calcula la homografía
-   y la escala `cm/píxel`.
-3. **Preprocesamiento** — `services/preprocess.py` corrige la perspectiva
-   (vista cenital) y divide en parches `64×64`.
+1. **Captura** — El frontend captura un frame (base64) + giróscopo (estabilidad) +
+   acelerómetro (superficie) + contexto del usuario (elemento/ubicación).
+2. **ArUco** — `services/aruco.py` detecta el marcador, estima el **ángulo de
+   inclinación** (sin calibración) y calcula la homografía y la escala `cm/píxel`.
+3. **Preprocesamiento** — `services/preprocess.py` **rectifica la perspectiva**
+   (vista cenital fronto-paralela) y divide en parches `64×64`.
 4. **Filtro rápido** — `services/filter.py` usa el `model_binary` para
    clasificar cada parche y devolver el veredicto.
-5. **Respuesta** — `AnalyzeResponse` con `aruco`, `preprocess` y `filter`.
+5. **Respuesta** — `AnalyzeResponse` con `aruco` (incl. `tilt_deg`, `cenital_ok`),
+   `preprocess`, `filter` y el contexto (`surface`, `element`, `location`).
+
+> La **superficie** (techo / piso / pared) se deriva del acelerómetro
+> (`services/camera.py::classify_surface`); el **elemento** (columna, viga, muro…)
+> lo aporta el usuario desde el menú del frontend.
 
 ## Modos de ejecución
 
@@ -92,5 +98,5 @@ Controlado por `APP_MODE` en el `.env` de la raíz (ver `core/config.py`):
   expuesto en `/docs`). El frontend solo consume estos modelos.
 - **Backend → Modelos:** el modelo binario se carga vía
   `core/model_loader.get_filter_model()`. Su contrato está documentado en
-  [`modelos.md`](modelos.md) y en `backend/model/model_binary/README.md`.
+  [`modelos.md`](modelos.md) y en [`../guias/entrenamiento.md`](../guias/entrenamiento.md).
 - **Catálogo de endpoints:** ver [`api_contrato.md`](api_contrato.md).

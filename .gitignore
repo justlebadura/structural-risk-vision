@@ -13,6 +13,7 @@ web-build/
 
 # Modelos (se entrenan/descargan en sprint 2; no versionar binarios pesados)
 backend/model/**/*.tflite
+backend/model/model_binary/artifacts/
 !backend/model/**/.gitkeep
 
 # Datos (datasets pesados de EDA/entrenamiento; se descargan localmente)

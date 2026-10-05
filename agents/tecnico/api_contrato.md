@@ -31,9 +31,15 @@ la documentación interactiva vive en `http://localhost:8000/docs`.
 // CaptureRequest
 {
   "image": "<base64 del frame>",
-  "sensor": { "rotation": [0.1, -0.2, 0.05], "accel": [0, 0, 9.8] }  // opcional
+  // Sensor del dispositivo (opcional). rotation = giróscopo (rad/s), accel = acelerómetro (m/s², incluye gravedad)
+  "sensor": { "rotation": [0.1, -0.2, 0.05], "accel": [0, 0, 9.8] },
+  // Contexto aportado por el usuario (opcional): dónde está la grieta
+  "context": { "element": "columna", "location": "columna C3, 1.2 m", "notes": null }
 }
 ```
+
+> `context.element` admite: `columna`, `viga`, `muro`, `losa`, `piso`, `techo`, `otro`.
+> El `accel` se usa para clasificar la **superficie** (techo / piso / pared).
 
 ### `GET /api/health`
 ```jsonc
@@ -57,12 +63,15 @@ la documentación interactiva vive en `http://localhost:8000/docs`.
     "corners": [[x,y], ...],
     "homography": [[...]],
     "scale_cm_per_px": 0.033,
-    "orientation": "cenital_ok",
+    "tilt_deg": 4.2,              // inclinación del marcador (grados, sin calibración)
+    "roll_deg": 0.0,              // rotación en el plano de la imagen
+    "cenital_ok": true,           // tilt <= MAX_TILT_DEG
+    "orientation": "cenital_ok",  // "cenital_ok" | "angulo_incorrecto"
     "stability": "estable",       // "estable" | "inestable"
     "message": null
   },
   "preprocess": {                 // null si no se detectó ArUco
-    "cenital_image": "<base64>",  // opcional
+    "cenital_image": "<base64>",  // imagen rectificada (fronto-paralela)
     "width_cm": 21.1,
     "height_cm": 21.1,
     "scale_cm_per_px": 0.033,
@@ -77,7 +86,12 @@ la documentación interactiva vive en `http://localhost:8000/docs`.
     "verdict": "GRIETA",          // "GRIETA" | "NO_GRIETA" | "SIN_MODELO"
     "confidence": 0.42,
     "patches": []
-  }
+  },
+  // Contexto de la inspección (Sección 1)
+  "surface": "piso",              // "techo" | "piso" | "pared" | "indeterminado"
+  "surface_tilt_deg": 0.0,        // ángulo del dispositivo respecto a la horizontal
+  "element": "columna",           // eco del contexto del usuario
+  "location": "columna C3, 1.2 m"
 }
 ```
 

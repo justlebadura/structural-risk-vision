@@ -40,6 +40,21 @@ export function ResultModal({ report, onClose }: ResultModalProps) {
               </Text>
             </View>
 
+            {(report?.element || report?.surface) && (
+              <Text style={styles.resultDetail}>
+                Ubicación: {[report?.element, report?.surface, report?.location]
+                  .filter(Boolean)
+                  .join(' · ')}
+              </Text>
+            )}
+
+            {report?.aruco?.tilt_deg !== undefined && report.aruco.tilt_deg !== null && (
+              <Text style={styles.resultDetail}>
+                Inclinación de captura: {report.aruco.tilt_deg.toFixed(1)}°
+                {report.aruco.cenital_ok === false ? ' (perspectiva mejorable)' : ' (cenital ✓)'}
+              </Text>
+            )}
+
             {report?.filter?.confidence !== undefined && report.filter.confidence !== null && (
               <Text style={styles.resultDetail}>
                 Fracción de parches con grieta: {(report.filter.confidence * 100).toFixed(1)}%

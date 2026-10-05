@@ -155,7 +155,16 @@ def analyze(req: CaptureRequest) -> AnalyzeResponse:
     if config.IS_DEMO:
         from services import demo
 
-        return AnalyzeResponse(job_id=str(uuid.uuid4()), **demo.demo_analyze())
+        surface_info = camera.classify_surface(req.sensor.dict() if req.sensor else None)
+        ctx = req.context
+        return AnalyzeResponse(
+            job_id=str(uuid.uuid4()),
+            **demo.demo_analyze(),
+            surface=surface_info["surface"],
+            surface_tilt_deg=surface_info["tilt_deg"],
+            element=ctx.element if ctx else None,
+            location=ctx.location if ctx else None,
+        )
 
     sensor = req.sensor.dict() if req.sensor else None
     stability = None
@@ -178,11 +187,17 @@ def analyze(req: CaptureRequest) -> AnalyzeResponse:
         patches = preprocess.split_patches(cenital)
         filter_out = FilterResult(**filter_svc.classify_patches(patches))
 
+    surface_info = camera.classify_surface(sensor)
+    ctx = req.context
     return AnalyzeResponse(
         job_id=str(uuid.uuid4()),
         aruco=aruco_out,
         preprocess=preprocess_out,
         filter=filter_out,
+        surface=surface_info["surface"],
+        surface_tilt_deg=surface_info["tilt_deg"],
+        element=ctx.element if ctx else None,
+        location=ctx.location if ctx else None,
     )
 
 

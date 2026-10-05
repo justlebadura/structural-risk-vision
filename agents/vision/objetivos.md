@@ -47,4 +47,4 @@ vaya de la **captura de imagen** a un **veredicto de riesgo**, integrando:
 - **Sin mocks silenciosos:** el backend reporta con claridad cuándo un modelo no
   está disponible (`SIN_MODELO`), en lugar de inventar resultados.
 - **Configuración por entorno:** el modo de ejecución y los parámetros viven en
-  `.env` (ver [`guias/desarrollo.md`](guias/desarrollo.md)).
+  `.env` (ver [`guias/desarrollo.md`](../guias/desarrollo.md)).

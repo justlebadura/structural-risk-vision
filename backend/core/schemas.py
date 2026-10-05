@@ -16,12 +16,20 @@ from pydantic import BaseModel
 class SensorData(BaseModel):
     """Datos del giróscopo/acelerómetro que el cliente envía con cada frame."""
     rotation: Optional[List[float]] = None   # [rx, ry, rz] rad/s
-    accel: Optional[List[float]] = None      # [ax, ay, az] m/s^2
+    accel: Optional[List[float]] = None      # [ax, ay, az] m/s^2 (incluye gravedad)
+
+
+class CaptureContext(BaseModel):
+    """Información aportada por el usuario sobre la ubicación de la grieta."""
+    element: Optional[str] = None    # "columna" | "viga" | "muro" | "losa" | "piso" | "techo" | ...
+    location: Optional[str] = None   # descripción libre (p. ej. "columna C3, 1.2 m")
+    notes: Optional[str] = None      # observaciones adicionales
 
 
 class CaptureRequest(BaseModel):
     image: str                       # frame en base64
     sensor: Optional[SensorData] = None
+    context: Optional[CaptureContext] = None
 
 
 class CameraStatus(BaseModel):
@@ -40,7 +48,10 @@ class ArucoDetection(BaseModel):
     corners: Optional[List[List[float]]] = None   # 4 esquinas [[x, y], ...]
     homography: Optional[List[List[float]]] = None
     scale_cm_per_px: Optional[float] = None
-    orientation: Optional[str] = None             # "cenital_ok" | "angulo_incorrecto" | ...
+    tilt_deg: Optional[float] = None              # inclinación del marcador (grados)
+    roll_deg: Optional[float] = None              # rotación en el plano de imagen
+    cenital_ok: Optional[bool] = None             # True si la perspectiva es aceptable
+    orientation: Optional[str] = None             # "cenital_ok" | "angulo_incorrecto"
     stability: Optional[str] = None               # "estable" | "inestable"
     message: Optional[str] = None
 
@@ -81,3 +92,8 @@ class AnalyzeResponse(BaseModel):
     aruco: ArucoDetection
     preprocess: Optional[PreprocessResult] = None
     filter: Optional[FilterResult] = None
+    # Contexto de la inspección (Sección 1)
+    surface: Optional[str] = None            # "techo" | "piso" | "pared" | "indeterminado"
+    surface_tilt_deg: Optional[float] = None # ángulo del dispositivo respecto a la horizontal
+    element: Optional[str] = None            # elemento indicado por el usuario (columna, viga…)
+    location: Optional[str] = None           # ubicación en texto libre

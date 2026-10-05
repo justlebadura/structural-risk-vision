@@ -1,0 +1,7 @@
+# Dependencias de ENTRENAMIENTO/EVALUACIÓN del modelo binario.
+# (El runtime del backend usa backend/requirements.txt, no este archivo.)
+tensorflow>=2.16
+scikit-learn>=1.4
+matplotlib>=3.8
+numpy>=1.26
+opencv-python>=4.9

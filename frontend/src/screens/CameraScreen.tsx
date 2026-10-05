@@ -1,20 +1,49 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { StyleSheet, View, StatusBar, ActivityIndicator, Alert } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
+import { Gyroscope, Accelerometer } from 'expo-sensors';
 import { colors } from '../theme/colors';
 import { analyzeImage } from '../api/inspect';
-import type { InspectionReport } from '../types/inspection';
+import type { CaptureContext, InspectionReport, SensorData } from '../types/inspection';
 import { PermissionView } from '../components/PermissionView';
 import { CameraOverlay } from '../components/CameraOverlay';
 import { ShutterButton } from '../components/ShutterButton';
 import { ResultModal } from '../components/ResultModal';
 
-export function CameraScreen() {
+interface CameraScreenProps {
+  context: CaptureContext;
+  onBack: () => void;
+}
+
+export function CameraScreen({ context, onBack }: CameraScreenProps) {
   const [permission, requestPermission] = useCameraPermissions();
   const [torchOn, setTorchOn] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [report, setReport] = useState<InspectionReport | null>(null);
   const cameraRef = useRef<any>(null);
+  const sensorRef = useRef<SensorData>({});
+
+  // Suscripción a giróscopo (estabilidad) y acelerómetro (superficie).
+  useEffect(() => {
+    let gyro: { remove: () => void } | undefined;
+    let accel: { remove: () => void } | undefined;
+    try {
+      Gyroscope.setUpdateInterval(100);
+      Accelerometer.setUpdateInterval(100);
+      gyro = Gyroscope.addListener(({ x, y, z }) => {
+        sensorRef.current.rotation = [x, y, z];
+      });
+      accel = Accelerometer.addListener(({ x, y, z }) => {
+        sensorRef.current.accel = [x, y, z];
+      });
+    } catch {
+      // Sensores no disponibles en esta plataforma.
+    }
+    return () => {
+      gyro?.remove();
+      accel?.remove();
+    };
+  }, []);
 
   if (!permission) {
     return (
@@ -42,7 +71,7 @@ export function CameraScreen() {
           throw new Error('No se pudo codificar la imagen a base64.');
         }
 
-        const data = await analyzeImage(photo.base64);
+        const data = await analyzeImage(photo.base64, sensorRef.current, context);
         setReport(data);
       } catch (error) {
         console.error('Error enviando la foto al backend:', error);
@@ -69,7 +98,11 @@ export function CameraScreen() {
 
       {/* Capa de interfaz flotante por encima del visor */}
       <View style={styles.overlay} pointerEvents="box-none">
-        <CameraOverlay torchOn={torchOn} onToggleTorch={() => setTorchOn((prev) => !prev)} />
+        <CameraOverlay
+          torchOn={torchOn}
+          onToggleTorch={() => setTorchOn((prev) => !prev)}
+          onBack={onBack}
+        />
         <ShutterButton onPress={handleTakePicture} disabled={isProcessing} processing={isProcessing} />
       </View>
 

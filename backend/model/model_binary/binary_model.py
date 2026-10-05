@@ -1,4 +1,4 @@
-"""Modelo binario grieta/no-grieta (MobileNetV2 → TFLite).
+"""Modelo binario grieta/no-grieta (U-Net muy ligera → TFLite).
 
 Este módulo define el CONTRATO que el modelo binario debe cumplir para que el
 backend lo consuma. El backend carga este modelo a través de
@@ -28,6 +28,26 @@ from core import config
 logger = __import__("logging").getLogger("model_binary")
 
 
+def _interpreter_class():
+    """Devuelve la clase de intérprete TFLite disponible.
+
+    Prefiere `tflite_runtime` (ligero, para despliegue) y cae a
+    `tensorflow.lite.Interpreter` si aquél no está instalado.
+    """
+    try:
+        from tflite_runtime.interpreter import Interpreter
+
+        return Interpreter
+    except ImportError:
+        pass
+    try:
+        import tensorflow as tf
+
+        return tf.lite.Interpreter
+    except ImportError:
+        return None
+
+
 class BinaryModel:
     """Interprete TFLite del filtro binario grieta/no-grieta."""
 
@@ -45,13 +65,15 @@ class BinaryModel:
                 config.FILTER_MODEL_PATH,
             )
             return
-        try:
-            import tflite_runtime.interpreter as tflite
-        except ImportError:
-            logger.warning("tflite-runtime no está instalado; filtro binario deshabilitado.")
+        interpreter_cls = _interpreter_class()
+        if interpreter_cls is None:
+            logger.warning(
+                "No hay intérprete TFLite disponible (tflite_runtime ni tensorflow); "
+                "filtro binario deshabilitado."
+            )
             return
 
-        self._interpreter = tflite.Interpreter(model_path=str(config.FILTER_MODEL_PATH))
+        self._interpreter = interpreter_cls(model_path=str(config.FILTER_MODEL_PATH))
         self._interpreter.allocate_tensors()
         self._input_index = self._interpreter.get_input_details()[0]["index"]
         self._output_index = self._interpreter.get_output_details()[0]["index"]

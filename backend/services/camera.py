@@ -7,6 +7,7 @@ delega a aruco/preprocess.
 """
 from __future__ import annotations
 
+import math
 import time
 import uuid
 from typing import Optional
@@ -14,6 +15,39 @@ from typing import Optional
 import numpy as np
 
 from core import config
+
+
+def classify_surface(sensor: Optional[dict]) -> dict:
+    """Determina la superficie (techo / piso / pared) desde el acelerómetro.
+
+    Usa la dirección de la gravedad en el marco del dispositivo. Convención
+    (Expo/Android): con la pantalla hacia arriba `az > 0`; la cámara trasera
+    apunta hacia abajo → **piso**. Pantalla hacia abajo → **techo**. Dispositivo
+    vertical (gravedad en el plano de la pantalla) → **pared**.
+
+    Devuelve `{surface, tilt_deg, source}`. `tilt_deg` es el ángulo del plano del
+    dispositivo respecto a la horizontal.
+    """
+    accel = (sensor or {}).get("accel")
+    if not accel or len(accel) != 3:
+        return {"surface": "indeterminado", "tilt_deg": None, "source": "sin_sensor"}
+
+    ax, ay, az = (float(v) for v in accel)
+    norm = math.sqrt(ax * ax + ay * ay + az * az)
+    if norm == 0:
+        return {"surface": "indeterminado", "tilt_deg": None, "source": "sin_sensor"}
+
+    nz = az / norm
+    tilt_deg = math.degrees(math.acos(min(abs(nz), 1.0)))
+
+    if abs(nz) >= config.SURFACE_HORIZONTAL_AZ:
+        surface = "piso" if nz >= 0 else "techo"
+    elif abs(nz) <= config.SURFACE_VERTICAL_AZ:
+        surface = "pared"
+    else:
+        surface = "indeterminado"
+
+    return {"surface": surface, "tilt_deg": round(tilt_deg, 1), "source": "acelerometro"}
 
 
 class CameraSession:
@@ -27,10 +61,10 @@ class CameraSession:
         self.latest_frame: Optional[np.ndarray] = None
 
     def feed(self, image: Optional[np.ndarray], sensor: Optional[dict]) -> dict:
-        """Registra un frame y devuelve el estado de estabilidad.
+        """Registra un frame y devuelve el estado de estabilidad y superficie.
 
         Usa la magnitud de rotación del giróscopo como guía de estabilidad:
-        si es baja, la captura es "estable".
+        si es baja, la captura es "estable". El acelerómetro indica la superficie.
         """
         if image is not None:
             self.latest_frame = image
@@ -48,7 +82,7 @@ class CameraSession:
             else:
                 message = f"Captura estable ({magnitude:.3f} rad/s)."
 
-        return {"stability": stability, "message": message}
+        return {"stability": stability, "message": message, **classify_surface(sensor)}
 
     def stop(self) -> None:
         self.active = False

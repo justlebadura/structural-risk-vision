@@ -17,21 +17,26 @@ backend/model/
 
 ## Modelo binario (`model_binary`)
 
-Clasificador binario `MobileNetV2 → TFLite` que decide si un parche tiene grieta.
+Clasificador binario que decide si un parche tiene grieta. Se comparan **dos
+arquitecturas** y se despliega la más ligera.
 
 | Aspecto | Valor |
 |---------|-------|
+| Arquitectura desplegada | **U-Net muy ligera** (`Conv1×1 → GAP → Dense(1, sigmoid)`) |
 | Pesos | `backend/model/model_binary/filter.tflite` |
 | Entrada | Parche RGB `64×64`, normalizado a `[0,1]`, shape `(1, 64, 64, 3)` |
 | Salida | `P(grieta) ∈ [0, 1]` (escalar) |
 | Umbral | `config.FILTER_THRESHOLD` (`0.5`); `≥ 0.5 → "GRIETA"` |
 | Integración | `core/model_loader.get_filter_model()` → `BinaryModel` |
+| Baseline alterna | MobileNetV2 (transfer learning, `alpha=0.35`) |
+
+**Resultados** (test METU balanceado): comparación completa, matrices de
+confusión y métricas en [`stats_modelo_binario.md`](stats_modelo_binario.md);
+cifras de titular en [`../datos/cifras_clave.md`](../datos/cifras_clave.md).
 
 - Si `filter.tflite` **no existe**, el backend responde `model_present=false` y
   `verdict="SIN_MODELO"` (nunca un mock silencioso).
-- El entrenamiento parte de `EDA/notebooks/01_clasificacion_grietas.ipynb`.
-- **Pasos para conectar el modelo** y detalles del contrato:
-  [`backend/model/model_binary/README.md`](../backend/model/model_binary/README.md).
+- Entrenamiento: `backend/model/model_binary/train.py` (ver su `README.md`).
 
 ## Modelo segmentador (`model_segmentator`)
 

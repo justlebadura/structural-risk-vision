@@ -1,0 +1,37 @@
+categoria,metrica,valor,unidad,descripcion,fuente
+Modelo:unet,parametros,121883,parámetros,Tamaño total del modelo,agents/tecnico/stats_modelo_binario.md
+Modelo:unet,tamano_tflite,492.2,KB,Peso del .tflite para móvil,agents/tecnico/stats_modelo_binario.md
+Modelo:unet,accuracy,0.997,"ratio [0,1]",Exactitud global (umbral 0.5),agents/tecnico/stats_modelo_binario.md
+Modelo:unet,precision,0.996,"ratio [0,1]",Precisión (positivos predichos correctos),agents/tecnico/stats_modelo_binario.md
+Modelo:unet,recall,0.998,"ratio [0,1]",Recall/sensibilidad (grietas detectadas),agents/tecnico/stats_modelo_binario.md
+Modelo:unet,specificity,0.996,"ratio [0,1]",Especificidad (sanos correctos),agents/tecnico/stats_modelo_binario.md
+Modelo:unet,f1,0.997,"ratio [0,1]",F1-score (balance precision/recall),agents/tecnico/stats_modelo_binario.md
+Modelo:unet,roc_auc,0.9995,"ratio [0,1]",Área bajo la curva ROC,agents/tecnico/stats_modelo_binario.md
+Modelo:unet,pr_auc,0.9995,"ratio [0,1]",Área bajo la curva Precision-Recall,agents/tecnico/stats_modelo_binario.md
+Modelo:unet,latencia,1.412,ms/parche,Inferencia TFLite en CPU,agents/tecnico/stats_modelo_binario.md
+Modelo:unet,throughput,708.2,parches/s,Parches procesados por segundo,agents/tecnico/stats_modelo_binario.md
+Modelo:unet,umbral_optimo_f1,0.54,probabilidad,Umbral que maximiza F1,agents/tecnico/stats_modelo_binario.md
+Modelo:unet,verdadero_positivo,998,imágenes,TP en test (grietas correctas),agents/tecnico/stats_modelo_binario.md
+Modelo:unet,verdadero_negativo,996,imágenes,TN en test (sanos correctos),agents/tecnico/stats_modelo_binario.md
+Modelo:unet,falso_positivo,4,imágenes,FP en test (falsa alarma),agents/tecnico/stats_modelo_binario.md
+Modelo:unet,falso_negativo,2,imágenes,FN en test (grieta no detectada),agents/tecnico/stats_modelo_binario.md
+Modelo:mobilenetv2,parametros,411489,parámetros,Tamaño total del modelo,agents/tecnico/stats_modelo_binario.md
+Modelo:mobilenetv2,tamano_tflite,1600.3,KB,Peso del .tflite para móvil,agents/tecnico/stats_modelo_binario.md
+Modelo:mobilenetv2,accuracy,0.997,"ratio [0,1]",Exactitud global (umbral 0.5),agents/tecnico/stats_modelo_binario.md
+Modelo:mobilenetv2,precision,0.998,"ratio [0,1]",Precisión (positivos predichos correctos),agents/tecnico/stats_modelo_binario.md
+Modelo:mobilenetv2,recall,0.996,"ratio [0,1]",Recall/sensibilidad (grietas detectadas),agents/tecnico/stats_modelo_binario.md
+Modelo:mobilenetv2,specificity,0.998,"ratio [0,1]",Especificidad (sanos correctos),agents/tecnico/stats_modelo_binario.md
+Modelo:mobilenetv2,f1,0.997,"ratio [0,1]",F1-score (balance precision/recall),agents/tecnico/stats_modelo_binario.md
+Modelo:mobilenetv2,roc_auc,0.9999,"ratio [0,1]",Área bajo la curva ROC,agents/tecnico/stats_modelo_binario.md
+Modelo:mobilenetv2,pr_auc,0.9999,"ratio [0,1]",Área bajo la curva Precision-Recall,agents/tecnico/stats_modelo_binario.md
+Modelo:mobilenetv2,latencia,0.16,ms/parche,Inferencia TFLite en CPU,agents/tecnico/stats_modelo_binario.md
+Modelo:mobilenetv2,throughput,6243.2,parches/s,Parches procesados por segundo,agents/tecnico/stats_modelo_binario.md
+Modelo:mobilenetv2,umbral_optimo_f1,0.31,probabilidad,Umbral que maximiza F1,agents/tecnico/stats_modelo_binario.md
+Modelo:mobilenetv2,verdadero_positivo,996,imágenes,TP en test (grietas correctas),agents/tecnico/stats_modelo_binario.md
+Modelo:mobilenetv2,verdadero_negativo,998,imágenes,TN en test (sanos correctos),agents/tecnico/stats_modelo_binario.md
+Modelo:mobilenetv2,falso_positivo,2,imágenes,FP en test (falsa alarma),agents/tecnico/stats_modelo_binario.md
+Modelo:mobilenetv2,falso_negativo,4,imágenes,FN en test (grieta no detectada),agents/tecnico/stats_modelo_binario.md
+Dataset:METU,eval_total,2000,imágenes,Subconjunto balanceado usado en la evaluación,agents/tecnico/stats_modelo_binario.md
+Dataset:METU,eval_positive,1000,imágenes,Con grieta en el set de evaluación,agents/tecnico/stats_modelo_binario.md
+Dataset:METU,eval_negative,1000,imágenes,Sin grieta en el set de evaluación,agents/tecnico/stats_modelo_binario.md
+Dataset:METU,input_size,64x64,píxeles,Tamaño de entrada del modelo,agents/tecnico/stats_modelo_binario.md

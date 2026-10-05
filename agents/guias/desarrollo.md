@@ -30,6 +30,10 @@ npm install
 npm start                     # o: npx expo start
 ```
 
+Flujo de la app: **menú → ubicación → cámara → reporte**. Usa `expo-camera` y
+`expo-sensors` (giróscopo + acelerómetro). Los sensores no están disponibles en
+web; para probarlos usa un dispositivo físico con Expo Go.
+
 ## Configuración (`.env` único en la raíz)
 
 Toda la configuración vive en un **único `.env` en la raíz del repositorio**.
@@ -54,7 +58,7 @@ cp .env.example .env   # ajusta los valores a tu entorno
 
 > El `.env` **no se versiona**; se crea a partir de `.env.example`.
 > El frontend consume únicamente `POST /api/analyze` (ver
-> [`api_contrato.md`](../api_contrato.md)).
+> [`api_contrato.md`](../tecnico/api_contrato.md)).
 
 ## EDA (cuadernos)
 
@@ -76,7 +80,7 @@ en **modo simulación** claramente etiquetado. Estructura esperada:
 - **Código y docs en español.**
 - **API:** los contratos viven en `backend/core/schemas.py`; el frontend solo
   consume esos modelos. Cambiar un schema implica actualizar
-  `frontend/src/types/inspection.ts` y la documentación en `agents/api_contrato.md`.
+  `frontend/src/types/inspection.ts` y la documentación en `agents/tecnico/api_contrato.md`.
 - **Sin mocks silenciosos:** si falta un modelo, reporta `SIN_MODELO`, no inventes datos.
 - **Modelos/datos:** los binarios `*.tflite` y datasets grandes van en
   `.gitignore`; no los versiones.

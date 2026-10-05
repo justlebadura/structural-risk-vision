@@ -6,15 +6,23 @@ import { FRAME_SIZE } from '../constants/layout';
 interface CameraOverlayProps {
   torchOn: boolean;
   onToggleTorch: () => void;
+  onBack?: () => void;
 }
 
-export function CameraOverlay({ torchOn, onToggleTorch }: CameraOverlayProps) {
+export function CameraOverlay({ torchOn, onToggleTorch, onBack }: CameraOverlayProps) {
   return (
     <View style={styles.overlay}>
       {/* Cabecera */}
       <View style={styles.header}>
-        <View style={styles.brandBadge}>
-          <Text style={styles.brandTitle}>CRACKGUARD</Text>
+        <View style={styles.headerLeft}>
+          {onBack && (
+            <TouchableOpacity style={styles.iconButton} onPress={onBack}>
+              <Ionicons name="chevron-back" size={22} color={colors.textPrimary} />
+            </TouchableOpacity>
+          )}
+          <View style={styles.brandBadge}>
+            <Text style={styles.brandTitle}>CRACKGUARD</Text>
+          </View>
         </View>
 
         <TouchableOpacity
@@ -53,6 +61,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 24,
     paddingTop: 16,
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
   },
   brandBadge: {
     paddingHorizontal: 12,
