@@ -5,9 +5,24 @@ __pycache__/
 .venv/
 venv/
 
-# Modelos (se entrenan/descargan en sprint 2; no versionar binarios pesados)
-backend/models/*.tflite
-!backend/models/.gitkeep
+# Node / Expo (frontend)
+node_modules/
+.expo/
+dist/
+web-build/
 
-# Entorno
+# Modelos (se entrenan/descargan en sprint 2; no versionar binarios pesados)
+backend/model/**/*.tflite
+!backend/model/**/.gitkeep
+
+# Datos (datasets pesados de EDA/entrenamiento; se descargan localmente)
+EDA/data/
+*.tflite
+
+# Índice de código (graphify) — artefacto regenerable
+graphify-out/
+
+# Entorno: nunca versionar variables/secretos, solo la plantilla
 .env
+.env.*
+!.env.example

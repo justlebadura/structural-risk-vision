@@ -43,6 +43,8 @@ def health() -> dict:
     model = get_filter_model()
     return {
         "status": "ok",
+        "mode": config.APP_MODE,
+        "demo": config.IS_DEMO,
         "sections": {"1_captura": True, "2_preprocesamiento": True, "3_filtro": True},
         "filter_model": "loaded" if model.present else "pending",
         "filter_model_path": str(config.FILTER_MODEL_PATH),
@@ -148,6 +150,12 @@ def analyze(req: CaptureRequest) -> AnalyzeResponse:
     image = _decode(req.image)
     if image is None:
         raise HTTPException(status_code=400, detail="Imagen inválida o vacía.")
+
+    # Modo demo: reporte sintético para validar el frontend (controlado por APP_MODE).
+    if config.IS_DEMO:
+        from services import demo
+
+        return AnalyzeResponse(job_id=str(uuid.uuid4()), **demo.demo_analyze())
 
     sensor = req.sensor.dict() if req.sensor else None
     stability = None
