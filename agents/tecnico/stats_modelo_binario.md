@@ -5,7 +5,7 @@ Reporte generado automáticamente por `evaluate.py`.
 ## 1. Dataset de evaluación
 
 - **Fuente**: METU — Concrete Crack Images for Classification (Özgenel, 2019).
-- **Set**: `test` con 2000 imágenes (1000 grieta / 1000 sin grieta).
+- **Set**: `test` con 8000 imágenes (4000 grieta / 4000 sin grieta).
 - **Entrada**: RGB 64×64, normalizado a [0, 1].
 - **Umbral por defecto**: 0.5.
 
@@ -13,22 +13,22 @@ Reporte generado automáticamente por `evaluate.py`.
 
 | Modelo | Accuracy | Precision | Recall | Specificity | F1 | ROC-AUC | PR-AUC |
 |--------|----------|-----------|--------|-------------|----|---------|--------|
-| unet | 0.9970 | 0.9960 | 0.9980 | 0.9960 | 0.9970 | 0.9995 | 0.9995 |
-| mobilenetv2 | 0.9970 | 0.9980 | 0.9960 | 0.9980 | 0.9970 | 0.9999 | 0.9999 |
+| unet | 0.9976 | 0.9973 | 0.9980 | 0.9972 | 0.9976 | 0.9996 | 0.9996 |
+| mobilenetv2 | 0.9974 | 0.9990 | 0.9958 | 0.9990 | 0.9974 | 1.0000 | 1.0000 |
 
 ## 3.1 Detalle — unet
 
 - Parámetros: **121,883**
 - Tamaño TFLite: **492.2 KB**
-- Latencia: **1.514 ms/parche** (~660.4 parches/s, CPU)
+- Latencia: **1.49 ms/parche** (~671.0 parches/s, CPU)
 - Umbral óptimo (mejor F1): **0.54** | Youden J: **0.54**
 
 **Matriz de confusión** (umbral 0.5):
 
 | | Pred: No-grieta | Pred: Grieta |
 |---|---|---|
-| **Real: No-grieta** | TN=996 | FP=4 |
-| **Real: Grieta** | FN=2 | TP=998 |
+| **Real: No-grieta** | TN=3989 | FP=11 |
+| **Real: Grieta** | FN=8 | TP=3992 |
 
 ![confusión unet](confusion_unet.png)
 
@@ -36,15 +36,15 @@ Reporte generado automáticamente por `evaluate.py`.
 
 - Parámetros: **411,489**
 - Tamaño TFLite: **1600.3 KB**
-- Latencia: **0.304 ms/parche** (~3294.8 parches/s, CPU)
-- Umbral óptimo (mejor F1): **0.31** | Youden J: **0.31**
+- Latencia: **0.163 ms/parche** (~6138.1 parches/s, CPU)
+- Umbral óptimo (mejor F1): **0.26** | Youden J: **0.26**
 
 **Matriz de confusión** (umbral 0.5):
 
 | | Pred: No-grieta | Pred: Grieta |
 |---|---|---|
-| **Real: No-grieta** | TN=998 | FP=2 |
-| **Real: Grieta** | FN=4 | TP=996 |
+| **Real: No-grieta** | TN=3996 | FP=4 |
+| **Real: Grieta** | FN=17 | TP=3983 |
 
 ![confusión mobilenetv2](confusion_mobilenetv2.png)
 
@@ -74,9 +74,9 @@ La época se elige por **`ModelCheckpoint(monitor="val_auc", mode="max", save_be
 
 ## 5. Conclusión
 
-- Mejor **F1**: `unet` (0.9970).
+- Mejor **F1**: `unet` (0.9976).
 - Modelo más **ligero**: `unet` (121,883 parámetros, 492.2 KB).
-- Menor **latencia**: `mobilenetv2` (0.304 ms/parche).
+- Menor **latencia**: `mobilenetv2` (0.163 ms/parche).
 - Si el F1 empata, se recomienda el modelo **más ligero** para el filtro rápido en móvil; MobileNetV2 aporta su mejor latencia vía XNNPACK.
 
 ## 6. Limitaciones

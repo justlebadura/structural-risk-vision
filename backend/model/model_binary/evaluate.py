@@ -402,7 +402,7 @@ def main():
     p.add_argument("--models", nargs="+", default=["unet", "mobilenetv2"])
     p.add_argument("--split", default="test", choices=["validation", "test"])
     p.add_argument("--input-size", type=int, default=64)
-    p.add_argument("--n-per-class", type=int, default=1000)
+    p.add_argument("--n-per-class", type=int, default=4000, help="imágenes por clase (4000 = todo el test)")
     p.add_argument("--seed", type=int, default=42)
     args = p.parse_args()
 

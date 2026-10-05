@@ -35,7 +35,7 @@ python train.py --model mobilenetv2 --epochs 12 --fine-tune-epochs 6
 ## Evaluar
 
 ```bash
-python evaluate.py --split test --n-per-class 1000
+python evaluate.py --split test --n-per-class 4000   # set de test completo (8000 imágenes)
 ```
 
 Genera el reporte de métricas en

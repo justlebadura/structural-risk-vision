@@ -1,27 +1,27 @@
 {
   "meta": {
-    "total": 2000,
-    "positive": 1000,
-    "negative": 1000,
+    "total": 8000,
+    "positive": 4000,
+    "negative": 4000,
     "split": "test",
     "input_size": 64
   },
   "results": [
     {
       "threshold": 0.5,
-      "accuracy": 0.997,
-      "precision": 0.996,
+      "accuracy": 0.9976,
+      "precision": 0.9973,
       "recall": 0.998,
-      "specificity": 0.996,
-      "f1": 0.997,
-      "balanced_accuracy": 0.997,
-      "roc_auc": 0.9995,
-      "pr_auc": 0.9995,
+      "specificity": 0.9972,
+      "f1": 0.9976,
+      "balanced_accuracy": 0.9976,
+      "roc_auc": 0.9996,
+      "pr_auc": 0.9996,
       "confusion": {
-        "tn": 996,
-        "fp": 4,
-        "fn": 2,
-        "tp": 998
+        "tn": 3989,
+        "fp": 11,
+        "fn": 8,
+        "tp": 3992
       },
       "best_f1_threshold": 0.54,
       "youden_threshold": 0.54,
@@ -30,35 +30,35 @@
       "confusion_png": "confusion_unet.png",
       "tflite_size_kb": 492.2,
       "latency": {
-        "ms_per_patch": 1.514,
-        "patches_per_s": 660.4
+        "ms_per_patch": 1.49,
+        "patches_per_s": 671.0
       }
     },
     {
       "threshold": 0.5,
-      "accuracy": 0.997,
-      "precision": 0.998,
-      "recall": 0.996,
-      "specificity": 0.998,
-      "f1": 0.997,
-      "balanced_accuracy": 0.997,
-      "roc_auc": 0.9999,
-      "pr_auc": 0.9999,
+      "accuracy": 0.9974,
+      "precision": 0.999,
+      "recall": 0.9958,
+      "specificity": 0.999,
+      "f1": 0.9974,
+      "balanced_accuracy": 0.9974,
+      "roc_auc": 1.0,
+      "pr_auc": 1.0,
       "confusion": {
-        "tn": 998,
-        "fp": 2,
-        "fn": 4,
-        "tp": 996
+        "tn": 3996,
+        "fp": 4,
+        "fn": 17,
+        "tp": 3983
       },
-      "best_f1_threshold": 0.31,
-      "youden_threshold": 0.31,
+      "best_f1_threshold": 0.26,
+      "youden_threshold": 0.26,
       "model": "mobilenetv2",
       "params": 411489,
       "confusion_png": "confusion_mobilenetv2.png",
       "tflite_size_kb": 1600.3,
       "latency": {
-        "ms_per_patch": 0.304,
-        "patches_per_s": 3294.8
+        "ms_per_patch": 0.163,
+        "patches_per_s": 6138.1
       }
     }
   ],
