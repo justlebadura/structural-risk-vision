@@ -30,8 +30,8 @@
       "confusion_png": "confusion_unet.png",
       "tflite_size_kb": 492.2,
       "latency": {
-        "ms_per_patch": 1.412,
-        "patches_per_s": 708.2
+        "ms_per_patch": 1.514,
+        "patches_per_s": 660.4
       }
     },
     {
@@ -57,9 +57,39 @@
       "confusion_png": "confusion_mobilenetv2.png",
       "tflite_size_kb": 1600.3,
       "latency": {
-        "ms_per_patch": 0.16,
-        "patches_per_s": 6243.2
+        "ms_per_patch": 0.304,
+        "patches_per_s": 3294.8
       }
+    }
+  ],
+  "diagnostics": [
+    {
+      "model": "unet",
+      "epochs": 22,
+      "best_epoch": 16,
+      "stopped_epoch": 22,
+      "early_stopped": true,
+      "best_val_auc": 0.9999839663505554,
+      "train_acc_best": 0.9972500205039978,
+      "val_acc_best": 0.9980000257492065,
+      "gap_acc": -0.0007500052452087402,
+      "val_loss_rising": false,
+      "diagnosis": "ajuste adecuado (sin under/overfitting significativos)",
+      "plot": "training_unet.png"
+    },
+    {
+      "model": "mobilenetv2",
+      "epochs": 18,
+      "best_epoch": 16,
+      "stopped_epoch": 18,
+      "early_stopped": false,
+      "best_val_auc": 0.9999859929084778,
+      "train_acc_best": 0.996749997138977,
+      "val_acc_best": 0.9955000281333923,
+      "gap_acc": 0.0012499690055847168,
+      "val_loss_rising": true,
+      "diagnosis": "sobreajuste (overfitting) leve",
+      "plot": "training_mobilenetv2.png"
     }
   ]
 }

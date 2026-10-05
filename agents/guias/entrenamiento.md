@@ -42,6 +42,10 @@ Genera el reporte de métricas en
 [`../tecnico/stats_modelo_binario.md`](../tecnico/stats_modelo_binario.md) y
 `artifacts/metrics.json` + matrices de confusión.
 
+El reporte incluye, por modelo, la **selección de época** (mejor `val_auc` según
+`ModelCheckpoint`), si hubo **early stopping**, y un **diagnóstico de under/overfitting**
+a partir de las curvas de pérdida/AUC train vs validación (`training_<modelo>.png`).
+
 ## Archivos del modelo
 
 | Archivo | Rol |

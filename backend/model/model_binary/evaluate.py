@@ -145,7 +145,85 @@ def _row(m: dict) -> str:
             f"{m['specificity']:.4f} | {m['f1']:.4f} | {m['roc_auc']:.4f} | {m['pr_auc']:.4f} |")
 
 
-def write_report(results: list, meta: dict, out_path: Path) -> None:
+# Debe coincidir con el EarlyStopping de train.py (monitor="val_auc", patience).
+TRAIN_PATIENCE = 6
+
+
+def _plot_training(name: str, h: dict, best_i: int, out_path: Path) -> None:
+    epochs = list(range(1, len(h["loss"]) + 1))
+    fig, axes = plt.subplots(1, 2, figsize=(11, 4))
+
+    axes[0].plot(epochs, h["loss"], label="train", color="#1f77b4")
+    axes[0].plot(epochs, h["val_loss"], label="val", color="#d62728")
+    axes[0].axvline(best_i + 1, color="#2ca02c", ls="--", label=f"mejor época ({best_i + 1})")
+    axes[0].set_title(f"Pérdida — {name}")
+    axes[0].set_xlabel("época"); axes[0].set_ylabel("loss"); axes[0].legend()
+
+    if h.get("auc") and h.get("val_auc"):
+        axes[1].plot(epochs, h["auc"], label="train AUC", color="#1f77b4")
+        axes[1].plot(epochs, h["val_auc"], label="val AUC", color="#d62728")
+        axes[1].axvline(best_i + 1, color="#2ca02c", ls="--", label=f"mejor época ({best_i + 1})")
+        axes[1].set_title(f"AUC — {name}")
+        axes[1].set_xlabel("época"); axes[1].set_ylabel("AUC"); axes[1].legend()
+
+    fig.tight_layout()
+    fig.savefig(out_path, dpi=130)
+    plt.close(fig)
+
+
+def diagnose_training(name: str) -> dict | None:
+    """Analiza el historial: época elegida, early stopping y under/overfitting."""
+    hist_path = ARTIFACTS / f"{name}_history.json"
+    if not hist_path.exists():
+        return None
+    h = json.loads(hist_path.read_text())
+    val_auc = h.get("val_auc")
+    if not val_auc:
+        return None
+
+    n = len(val_auc)
+    best_i = int(np.argmax(val_auc))          # primera mejor época (monitor del checkpoint)
+    stopped_i = n - 1
+    early_stopped = (stopped_i - best_i) >= TRAIN_PATIENCE
+
+    acc = h.get("accuracy", [])
+    vacc = h.get("val_accuracy", [])
+    vloss = h.get("val_loss", [])
+    train_acc_best = float(acc[best_i]) if best_i < len(acc) else None
+    val_acc_best = float(vacc[best_i]) if best_i < len(vacc) else None
+    gap = (train_acc_best - val_acc_best) if (train_acc_best is not None and val_acc_best is not None) else None
+
+    tail = vloss[best_i:] if best_i < len(vloss) else []
+    val_loss_rising = len(tail) >= 3 and tail[-1] > min(tail) + 1e-3
+
+    if val_acc_best is not None and val_acc_best < 0.90 and (train_acc_best or 0) < 0.95:
+        diagnosis = "subajuste (underfitting)"
+    elif (gap is not None and gap > 0.03) or val_loss_rising:
+        diagnosis = "sobreajuste (overfitting) leve"
+    else:
+        diagnosis = "ajuste adecuado (sin under/overfitting significativos)"
+
+    out = REPORT_DIR / f"training_{name}.png"
+    REPORT_DIR.mkdir(parents=True, exist_ok=True)
+    _plot_training(name, h, best_i, out)
+
+    return {
+        "model": name,
+        "epochs": n,
+        "best_epoch": best_i + 1,
+        "stopped_epoch": stopped_i + 1,
+        "early_stopped": bool(early_stopped),
+        "best_val_auc": float(val_auc[best_i]),
+        "train_acc_best": train_acc_best,
+        "val_acc_best": val_acc_best,
+        "gap_acc": gap,
+        "val_loss_rising": bool(val_loss_rising),
+        "diagnosis": diagnosis,
+        "plot": out.name,
+    }
+
+
+def write_report(results: list, meta: dict, out_path: Path, diagnostics: list | None = None) -> None:
     lines = []
     lines.append("# Métricas del Modelo Binario (Grieta / No-grieta)\n")
     lines.append("Reporte generado automáticamente por `evaluate.py`.\n")
@@ -181,12 +259,36 @@ def write_report(results: list, meta: dict, out_path: Path) -> None:
         lines.append("")
         lines.append(f"![confusión {m['model']}]({m['confusion_png']})\n")
 
+    if diagnostics:
+        lines.append("## 4. Selección de época y diagnóstico de ajuste\n")
+        lines.append(
+            "La época se elige por **`ModelCheckpoint(monitor=\"val_auc\", mode=\"max\", "
+            "save_best_only=True)`**: se guarda el modelo con mejor AUC de validación. El "
+            "entrenamiento se detiene con **`EarlyStopping(monitor=\"val_auc\", "
+            f"patience={TRAIN_PATIENCE}, restore_best_weights=True)`**.\n"
+        )
+        for d in diagnostics:
+            lines.append(f"### {d['model']}\n")
+            lines.append(f"- Épocas ejecutadas: **{d['epochs']}** · mejor época: **{d['best_epoch']}** "
+                         f"(val AUC = {d['best_val_auc']:.4f}).")
+            stop = (f"sí, {d['stopped_epoch'] - d['best_epoch']} épocas después de la mejor "
+                    f"(paró en la {d['stopped_epoch']})" if d["early_stopped"]
+                    else f"no (se alcanzó el máximo de épocas; paró en la {d['stopped_epoch']})")
+            lines.append(f"- Early stopping: {stop}.")
+            if d["train_acc_best"] is not None and d["val_acc_best"] is not None:
+                lines.append(f"- Accuracy en la mejor época: train = {d['train_acc_best']:.4f}, "
+                             f"val = {d['val_acc_best']:.4f} (gap = {d['gap_acc']:+.4f}).")
+            lines.append(f"- `val_loss` tras la mejor época: "
+                         f"{'sube (señal de sobreajuste)' if d['val_loss_rising'] else 'no sube'}.")
+            lines.append(f"- **Diagnóstico: {d['diagnosis']}.**")
+            lines.append(f"\n![curvas de entrenamiento {d['model']}]({d['plot']})\n")
+
     if len(results) >= 2:
         best = max(results, key=lambda r: r["f1"])
         lightest = min(results, key=lambda r: r["params"])
         fastest = min((r for r in results if "latency" in r), key=lambda r: r["latency"]["ms_per_patch"],
                       default=None)
-        lines.append("## 4. Conclusión\n")
+        lines.append("## 5. Conclusión\n")
         lines.append(f"- Mejor **F1**: `{best['model']}` ({best['f1']:.4f}).")
         lines.append(f"- Modelo más **ligero**: `{lightest['model']}` "
                      f"({lightest['params']:,} parámetros, {lightest.get('tflite_size_kb', '?')} KB).")
@@ -196,7 +298,7 @@ def write_report(results: list, meta: dict, out_path: Path) -> None:
         lines.append("- Si el F1 empata, se recomienda el modelo **más ligero** para el filtro "
                      "rápido en móvil; MobileNetV2 aporta su mejor latencia vía XNNPACK.\n")
 
-    lines.append("## 5. Limitaciones\n")
+    lines.append("## 6. Limitaciones\n")
     lines.append("- METU es un benchmark **casi saturado**: el estado del arte reporta "
                  ">99% en esta tarea, por lo que un F1 ≈ 1.0 es esperable (y no debe "
                  "leerse como 'problema resuelto').")
@@ -326,8 +428,9 @@ def main():
     ARTIFACTS.mkdir(exist_ok=True)
 
     # Fuente única de verdad + todo lo derivado de ella.
-    METRICS_JSON.write_text(json.dumps({"meta": meta, "results": results}, indent=2))
-    write_report(results, meta, REPORT_DIR / REPORT_NAME)
+    diagnostics = [d for d in (diagnose_training(m["model"]) for m in results) if d]
+    METRICS_JSON.write_text(json.dumps({"meta": meta, "results": results, "diagnostics": diagnostics}, indent=2))
+    write_report(results, meta, REPORT_DIR / REPORT_NAME, diagnostics)
     write_csv(results, meta, DATA_DIR / CSV_NAME)
     write_cifras(results, meta, DATA_DIR / CIFRAS_NAME)
     print(f"[done] generados: {METRICS_JSON}, {DATA_DIR / CSV_NAME}, "

@@ -8,8 +8,8 @@ Modelo:unet,specificity,0.996,"ratio [0,1]",Especificidad (sanos correctos),agen
 Modelo:unet,f1,0.997,"ratio [0,1]",F1-score (balance precision/recall),agents/tecnico/stats_modelo_binario.md
 Modelo:unet,roc_auc,0.9995,"ratio [0,1]",Área bajo la curva ROC,agents/tecnico/stats_modelo_binario.md
 Modelo:unet,pr_auc,0.9995,"ratio [0,1]",Área bajo la curva Precision-Recall,agents/tecnico/stats_modelo_binario.md
-Modelo:unet,latencia,1.412,ms/parche,Inferencia TFLite en CPU,agents/tecnico/stats_modelo_binario.md
-Modelo:unet,throughput,708.2,parches/s,Parches procesados por segundo,agents/tecnico/stats_modelo_binario.md
+Modelo:unet,latencia,1.514,ms/parche,Inferencia TFLite en CPU,agents/tecnico/stats_modelo_binario.md
+Modelo:unet,throughput,660.4,parches/s,Parches procesados por segundo,agents/tecnico/stats_modelo_binario.md
 Modelo:unet,umbral_optimo_f1,0.54,probabilidad,Umbral que maximiza F1,agents/tecnico/stats_modelo_binario.md
 Modelo:unet,verdadero_positivo,998,imágenes,TP en test (grietas correctas),agents/tecnico/stats_modelo_binario.md
 Modelo:unet,verdadero_negativo,996,imágenes,TN en test (sanos correctos),agents/tecnico/stats_modelo_binario.md
@@ -24,8 +24,8 @@ Modelo:mobilenetv2,specificity,0.998,"ratio [0,1]",Especificidad (sanos correcto
 Modelo:mobilenetv2,f1,0.997,"ratio [0,1]",F1-score (balance precision/recall),agents/tecnico/stats_modelo_binario.md
 Modelo:mobilenetv2,roc_auc,0.9999,"ratio [0,1]",Área bajo la curva ROC,agents/tecnico/stats_modelo_binario.md
 Modelo:mobilenetv2,pr_auc,0.9999,"ratio [0,1]",Área bajo la curva Precision-Recall,agents/tecnico/stats_modelo_binario.md
-Modelo:mobilenetv2,latencia,0.16,ms/parche,Inferencia TFLite en CPU,agents/tecnico/stats_modelo_binario.md
-Modelo:mobilenetv2,throughput,6243.2,parches/s,Parches procesados por segundo,agents/tecnico/stats_modelo_binario.md
+Modelo:mobilenetv2,latencia,0.304,ms/parche,Inferencia TFLite en CPU,agents/tecnico/stats_modelo_binario.md
+Modelo:mobilenetv2,throughput,3294.8,parches/s,Parches procesados por segundo,agents/tecnico/stats_modelo_binario.md
 Modelo:mobilenetv2,umbral_optimo_f1,0.31,probabilidad,Umbral que maximiza F1,agents/tecnico/stats_modelo_binario.md
 Modelo:mobilenetv2,verdadero_positivo,996,imágenes,TP en test (grietas correctas),agents/tecnico/stats_modelo_binario.md
 Modelo:mobilenetv2,verdadero_negativo,998,imágenes,TN en test (sanos correctos),agents/tecnico/stats_modelo_binario.md
