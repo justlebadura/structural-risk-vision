@@ -12,6 +12,20 @@ export interface ArucoResult {
   message?: string | null;
 }
 
+export interface ElementInclination {
+  detected: boolean;
+  method?: string;
+  tilt_deg?: number | null;
+  tilt_signed_deg?: number | null;
+  angle_deg?: number | null;
+  reference?: string | null;
+  confidence?: number | null;
+  lines_count?: number;
+  inlier_lines?: number;
+  reliable?: boolean;
+  message?: string | null;
+}
+
 export interface PreprocessResult {
   cenital_image?: string | null;
   width_cm?: number | null;
@@ -25,6 +39,18 @@ export interface FilterResult {
   confidence?: number | null;
   total_patches?: number;
   crack_patches?: number;
+  model_present?: boolean;
+  implemented?: boolean;
+  message?: string | null;
+}
+
+export interface HealthResponse {
+  status: string;
+  mode: string;
+  demo: boolean;
+  sections?: Record<string, boolean>;
+  filter_model?: 'loaded' | 'pending' | string;
+  filter_model_path?: string;
 }
 
 /** Información que el usuario aporta sobre la ubicación de la grieta. */
@@ -42,9 +68,12 @@ export interface SensorData {
 
 export interface InspectionReport {
   job_id?: string;
+  mode?: string | null;
+  demo?: boolean | null;
   aruco?: ArucoResult;
   preprocess?: PreprocessResult;
   filter?: FilterResult;
+  inclination?: ElementInclination | null;
   surface?: string | null;
   surface_tilt_deg?: number | null;
   element?: string | null;
