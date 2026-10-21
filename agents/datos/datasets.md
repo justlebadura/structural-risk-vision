@@ -50,3 +50,7 @@ Ver [`EDA/README.md`](../../EDA/README.md) para requisitos y reproducibilidad.
   auto-cumplida.
 - **Bins LBP corregidos:** un LBP uniforme con `P=8` tiene exactamente
   `P+2 = 10` patrones.
+- **Robustez ante sombras:** el cuaderno 01 mide el efecto de sombras suaves y
+  duras. Una sombra dura dispara el FPR porque su borde recto se parece a una
+  grieta. Decisiones y cifras en
+  [`../tecnico/bitacora_errores.md`](../tecnico/bitacora_errores.md).

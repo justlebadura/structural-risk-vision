@@ -14,9 +14,18 @@ clase) usando una muestra reproducible (`seed=42`). No es el dataset completo;
 para reproducir el dataset entero usa `EDA_SAMPLE_PER_CLASS=0` en una máquina
 con RAM suficiente.
 
+La sección de **robustez ante sombras** requiere `filter.tflite` local. Si el
+modelo no está disponible, el notebook lo indica y omite esa sección sin fallar.
+
 El cuaderno 02 conserva sus salidas de **modo simulación** porque el repositorio
 no incluye máscaras reales de segmentación. Esas salidas demuestran la
 metodología, no hallazgos sobre Crack500/CFD.
+
+El cuaderno 01 incluye una prueba de **robustez ante sombras** con el modelo
+TFLite desplegado. Resultado principal: una sombra dura con borde recto dispara
+el FPR a ~98.7% en una muestra de 300 imágenes sanas, mientras que una sombra
+suave no genera falsos positivos pero baja el recall. Las decisiones derivadas
+están en [`../agents/tecnico/bitacora_errores.md`](../agents/tecnico/bitacora_errores.md).
 
 ## Requisitos
 
