@@ -7,13 +7,24 @@ Datos** (`EDA/notebooks/`).
 
 | #  | Cuaderno | Foco |
 |----|----------|------|
-| 01 | [`01_clasificacion_grietas.ipynb`](../../EDA/notebooks/01_clasificacion_grietas.ipynb) | Integridad, univariado/bivariado e hipótesis para la clasificación binaria de grietas. |
-| 02 | [`02_pipeline_segmentacion_severidad.ipynb`](../../EDA/notebooks/02_pipeline_segmentacion_severidad.ipynb) | Segmentación, transformada de distancia, escala ArUco y severidad. |
+| 01 | [`01_clasificacion_grietas.ipynb`](../../EDA/notebooks/01_clasificacion_grietas.ipynb) | Integridad, univariado/bivariado e hipótesis. **Ejecutado con METU real y salidas versionadas** (muestra 2,000/clase). |
+| 02 | [`02_pipeline_segmentacion_severidad.ipynb`](../../EDA/notebooks/02_pipeline_segmentacion_severidad.ipynb) | Segmentación, transformada de distancia, escala ArUco y severidad. Salidas de **simulación** (faltan máscaras Crack500/CFD). |
 
 Cada cuaderno intenta **cargar el dataset real** desde `EDA/data/`. Si no está
 presente, entra en **modo simulación** (datos sintéticos) y **lo etiqueta en
 pantalla**: los resultados de la simulación solo demuestran la metodología y
 **no** deben presentarse como hallazgos sobre el dataset real.
+
+El cuaderno 01 se versionó con salidas reales usando `EDA_SAMPLE_PER_CLASS=2000`
+(4,000 imágenes, semilla 42). Para el dataset completo:
+
+```bash
+EDA_DATA_DIR=EDA/data EDA_SAMPLE_PER_CLASS=0 \
+python -m nbconvert --to notebook --execute --inplace \
+  EDA/notebooks/01_clasificacion_grietas.ipynb
+```
+
+Ver [`EDA/README.md`](../../EDA/README.md) para requisitos y reproducibilidad.
 
 ## Datasets
 
