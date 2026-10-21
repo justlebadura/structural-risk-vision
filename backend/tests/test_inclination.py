@@ -11,6 +11,7 @@ BACKEND_DIR = Path(__file__).resolve().parents[1]
 if str(BACKEND_DIR) not in sys.path:
     sys.path.insert(0, str(BACKEND_DIR))
 
+from services import filter as filter_svc  # noqa: E402
 from services import inclination  # noqa: E402
 
 
@@ -55,6 +56,13 @@ class InclinationTests(unittest.TestCase):
         self.assertFalse(result["detected"])
         self.assertIsNone(result["tilt_deg"])
         self.assertEqual(result["lines_count"], 0)
+
+
+class FilterColorTests(unittest.TestCase):
+    def test_bgr_patch_is_converted_to_rgb(self) -> None:
+        bgr = np.array([[[10, 20, 30]]], dtype=np.uint8)
+        rgb = filter_svc._to_rgb(bgr)
+        self.assertEqual(rgb.tolist(), [[[30, 20, 10]]])
 
 
 if __name__ == "__main__":

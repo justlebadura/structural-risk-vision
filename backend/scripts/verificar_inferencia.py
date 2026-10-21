@@ -60,6 +60,7 @@ def main() -> int:
         return 1
 
     patch = cv2.resize(image, (config.FILTER_INPUT_SIZE, config.FILTER_INPUT_SIZE))
+    patch = cv2.cvtColor(patch, cv2.COLOR_BGR2RGB)
     probability = model.predict(patch)
     report.update(
         {

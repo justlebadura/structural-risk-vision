@@ -14,6 +14,18 @@ from core import config
 from core.model_loader import get_filter_model
 from services.images import encode_base64_image
 
+try:
+    import cv2
+except ImportError:  # pragma: no cover
+    cv2 = None
+
+
+def _to_rgb(patch: np.ndarray) -> np.ndarray:
+    """El backend trabaja en BGR; el modelo se entrenó con RGB."""
+    if cv2 is not None and patch.ndim == 3 and patch.shape[2] == 3:
+        return cv2.cvtColor(patch, cv2.COLOR_BGR2RGB)
+    return patch
+
 
 def classify_patches(
     patches: List[np.ndarray],
@@ -43,7 +55,7 @@ def classify_patches(
     results = []
     crack_count = 0
     for p in patches:
-        prob = model.predict(p)
+        prob = model.predict(_to_rgb(p))
         label = "GRIETA" if prob >= threshold else "NO_GRIETA"
         if label == "GRIETA":
             crack_count += 1
