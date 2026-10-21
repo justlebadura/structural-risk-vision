@@ -204,6 +204,102 @@ Escena reproducible con una grieta real de METU + marcador ArUco sintético:
 
 ---
 
+## 🧪 Sustentación técnica de decisiones
+
+Esta sección explica **por qué** usamos estos datos, variables e hiperparámetros,
+y qué problemas encontramos. La bitácora completa está en
+[`agents/tecnico/bitacora_errores.md`](agents/tecnico/bitacora_errores.md).
+
+### Datos y EDA
+
+| Decisión | Valor | Por qué |
+|----------|-------|---------|
+| Dataset base | METU (40,000 imágenes: 20k grieta / 20k sin grieta) | Benchmark público, balanceado y con splits oficiales; permite comparar con literatura. |
+| Tamaño de imagen | 227×227 original → 64×64 para el modelo | 64×64 reduce cómputo y peso; un parche de grieta no necesita más resolución para el filtro binario. |
+| Muestra EDA | 2,000 imágenes por clase (4,000) | Cargar 40,000 imágenes exigía ~6.2 GB solo en píxeles. La muestra es reproducible (`seed=42`) y los conteos completos se calculan sin cargar imágenes. |
+| Dataset versionado | No | Son ~318 MB con licencia; se documenta su descarga. Se versionan notebooks ejecutados, figuras y resultados. |
+| Notebook 02 | Simulación etiquetada | No hay máscaras reales de Crack500/CFD en el repositorio. No se presentan como hallazgos reales. |
+| Prueba de sombras | 300 imágenes por clase | Permite medir FPR/recall bajo sombra suave y dura sin convertir el EDA en un experimento costoso. |
+
+Variables reproducibles:
+
+- `EDA_DATA_DIR`: ruta a los datos.
+- `EDA_SAMPLE_PER_CLASS`: imágenes por clase (`0` = dataset completo).
+- `APP_MODE`: `demo` o `prod`.
+- `EXPO_PUBLIC_API_URL`: URL del backend para la app.
+- `FILTER_THRESHOLD`: umbral de decisión del filtro.
+
+### Modelo e hiperparámetros
+
+| Hiperparámetro | Valor | Sustentación |
+|----------------|-------|--------------|
+| Entrada | 64×64×3, normalizada a [0,1] | Coincide con el parche del pipeline; 640/64 = 10 → 100 parches por vista cenital. |
+| Modelo desplegado | U-Net ligera | F1 0.9976, 121,883 parámetros, 492 KB. Mejor relación precisión/tamaño que MobileNetV2. |
+| Baseline | MobileNetV2 (`alpha=0.35`) | F1 0.9974, 411,489 parámetros, 1.6 MB; más rápido (0.163 ms/parche) pero más pesado y con sobreajuste leve. |
+| Train | 2,000 imágenes por clase | Balanceado y viable en CPU (~547 s para U-Net). |
+| Validación | 1,000 imágenes por clase | Control de época y early stopping sin tocar test. |
+| Test | 4,000 por clase (8,000) | Evaluación final balanceada. |
+| Batch | 64 | Compromiso entre estabilidad de gradiente y memoria en CPU. |
+| Optimizador | Adam, `lr=1e-3` | Convergencia rápida en un modelo pequeño; fine-tuning de MobileNet usa `lr/10`. |
+| Pérdida | Binary cross-entropy | Problema binario con salida sigmoide. |
+| Épocas máximas | 30 (U-Net) · 12 + 6 fine-tuning (MobileNet) | El early stopping decide antes; U-Net paró en 22 con mejor época 16. |
+| Early stopping | `val_auc`, paciencia 6 | Evita sobreajuste y elige la época por capacidad de ranking, no solo accuracy. |
+| `ReduceLROnPlateau` | factor 0.5, paciencia 3, `min_lr=1e-5` | Estabiliza la convergencia cuando `val_loss` se estanca. |
+| Augmentación | flips, rotaciones 90/180/270, brillo ±0.12, contraste 0.85–1.15 | Aumenta variedad sin deformar la geometría de la grieta. |
+| Umbral de inferencia | 0.5 | Neutro y no ajustado a test. Los umbrales “óptimos” (0.54 U-Net, 0.26 MobileNet) se reportan solo como diagnóstico para evitar leakage. |
+
+### Cifras y cómo leerlas
+
+- **F1 0.9976 / recall 0.9980 / ROC-AUC 0.9996** en 8,000 imágenes de test.
+- **FP=11, FN=8** para U-Net. En seguridad estructural, un FN (grieta no vista)
+  suele ser más costoso que un FP; por eso se reporta recall además de accuracy.
+- **Accuracy sola no basta**: con clases balanceadas puede ocultar el intercambio
+  entre FP y FN. Por eso se reportan precision, recall, specificity, F1 y AUC.
+- **F1 ≈ 1.0 no significa “problema resuelto”**: METU está casi saturado y el
+  dominio real (vista cenital móvil) es distinto. La métrica que falta es la
+  evaluación en ese dominio.
+
+### Evidencia del problema de sombras
+
+En una muestra de 300 imágenes por clase:
+
+| Escenario | Recall | Specificity | FPR | FP | FN |
+|-----------|--------|-------------|-----|----|----|
+| Base | 0.9667 | 0.9833 | 0.0167 | 5 | 10 |
+| Sombra suave | 0.9533 | 0.9833 | 0.0167 | 5 | 14 |
+| Sombra dura | 1.0000 | 0.0133 | **0.9867** | **296** | 0 |
+| Sombra dura + CLAHE | 0.9967 | 0.1800 | 0.8200 | 246 | 1 |
+| Base + CLAHE | 0.9700 | 0.9533 | 0.0467 | 14 | 9 |
+
+Decisiones derivadas:
+
+1. No se activó CLAHE por defecto: reduce el FPR bajo sombra dura, pero empeora
+   la especificidad en imágenes normales.
+2. Se corrigió el orden de canales **BGR→RGB** en inferencia.
+3. La app recomienda **luz difusa y evitar sombras duras**.
+4. La augmentación de sombras queda como línea de reentrenamiento, no como algo
+   ya desplegado.
+5. El experimento queda como prueba de regresión para futuros modelos.
+
+### Pipeline y variables geométricas
+
+| Variable | Valor | Por qué |
+|----------|-------|---------|
+| `PATCH_SIZE` | 64 px | Coincide con la entrada del modelo y permite 100 parches en una vista de 640×640. |
+| `NORM_SIZE` | 640 px | Resolución suficiente para medir grietas y mantener el costo de inferencia bajo. |
+| `REAL_MARKER_SIZE_CM` | 5 cm | Tamaño físico conocido del marcador; base de la escala cm/píxel. |
+| `MAX_TILT_DEG` | 35° | Tolerancia práctica de captura; por encima, la homografía extrapola demasiado. |
+| Canny | ratios 0.66 / 1.33 sobre la mediana | Umbrales adaptativos a iluminación. |
+| Hough | umbral 45, línea mínima 20% del lado menor, gap 3% | Busca bordes largos del elemento y descarta texturas pequeñas. |
+| Tolerancia de eje | ±30° | Agrupa rectas del mismo elemento y descarta diagonales de grietas. |
+| Confianza mínima | 0.25 de longitud inlier | Evita reportar una inclinación con pocas rectas. |
+
+La inclinación es **aparente respecto al eje de la imagen/marcador**. No es una
+medición absoluta respecto a la gravedad; para eso haría falta un inclinómetro o
+una referencia externa.
+
+---
+
 ## 🧭 Directorio de accesibilidad
 
 ¿Qué necesitas hacer? → ve directo al documento.
@@ -217,6 +313,7 @@ Escena reproducible con una grieta real de METU + marcador ArUco sintético:
 | **Entrenar/evaluar** el modelo binario | [`agents/guias/entrenamiento.md`](agents/guias/entrenamiento.md) |
 | Ver **métricas** del modelo (F1, confusión, recall, selección de época, overfitting) | [`agents/tecnico/stats_modelo_binario.md`](agents/tecnico/stats_modelo_binario.md) |
 | Ver una **predicción de ejemplo** del pipeline completo | [`agents/datos/ejemplo_prediccion/`](agents/datos/ejemplo_prediccion/) |
+| Ver **errores, imprecisiones y decisiones** del proceso | [`agents/tecnico/bitacora_errores.md`](agents/tecnico/bitacora_errores.md) |
 | **Cifras** listas para presentación | [`agents/datos/cifras_clave.md`](agents/datos/cifras_clave.md) |
 | Hacer una **presentación** con call-to-actions | [`agents/vision/presentacion.md`](agents/vision/presentacion.md) |
 | **Navegar el código** (índice estructural) | [`agents/guias/graphify.md`](agents/guias/graphify.md) |

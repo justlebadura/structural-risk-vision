@@ -31,6 +31,7 @@ documentos técnicos, datos y guías.
 | [`tecnico/modelos.md`](tecnico/modelos.md) | Modelos binario y segmentador: contrato e integración. |
 | [`tecnico/stats_modelo_binario.md`](tecnico/stats_modelo_binario.md) | Métricas del modelo binario (matriz de confusión, F1, recall…). |
 | [`tecnico/ejemplo_prediccion.md`](tecnico/ejemplo_prediccion.md) | Predicción de ejemplo del pipeline completo (JSON + imagen anotada). |
+| [`tecnico/bitacora_errores.md`](tecnico/bitacora_errores.md) | Errores, imprecisiones, decisiones y pendientes del proceso experimental. |
 
 ### Datos
 | Documento | Contenido |

@@ -59,7 +59,7 @@ structural-risk-vision/
 │   ├── README.md                    # índice de navegación
 │   ├── config/settings.json         # configuración de agente (no es doc)
 │   ├── vision/                      # objetivos, atractivo, presentación
-│   ├── tecnico/                     # arquitectura, estructura, API, modelos, stats
+│   ├── tecnico/                     # arquitectura, estructura, API, modelos, stats, bitácora
 │   ├── datos/                       # datasets, estadísticas y ejemplo_prediccion/
 │   └── guias/                       # desarrollo, entrenamiento, graphify
 │

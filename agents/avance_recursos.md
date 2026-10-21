@@ -50,6 +50,7 @@ con los avances alcanzados en cada etapa del proyecto.
 | Contrato de API | [`tecnico/api_contrato.md`](tecnico/api_contrato.md) | Endpoints REST + WebSocket y esquemas. | Integración frontend. | Vigente |
 | Modelos | [`tecnico/modelos.md`](tecnico/modelos.md) | Modelo binario y segmentador; integración. | Referencia de modelos. | Vigente |
 | Métricas del modelo | [`tecnico/stats_modelo_binario.md`](tecnico/stats_modelo_binario.md) | Confusión, F1, recall, AUC, época y ajuste. | Validación experimental. | Generado |
+| Bitácora de errores | [`tecnico/bitacora_errores.md`](tecnico/bitacora_errores.md) | Errores, imprecisiones, decisiones y pendientes. | Trazabilidad del proceso. | Vigente |
 | Guía de desarrollo | [`guias/desarrollo.md`](guias/desarrollo.md) | Ejecución, `.env`, convenciones. | Reproducibilidad. | Vigente |
 | Guía de entrenamiento | [`guias/entrenamiento.md`](guias/entrenamiento.md) | Entrenar/evaluar el modelo binario. | Reproducir experimentos. | Vigente |
 | Guía graphify | [`guias/graphify.md`](guias/graphify.md) | Navegación del código por índice estructural. | Navegación. | Vigente |
@@ -82,7 +83,7 @@ con los avances alcanzados en cada etapa del proyecto.
 
 | Recurso | Ubicación | Descripción | Propósito | Estado |
 |---------|-----------|-------------|-----------|--------|
-| EDA clasificación | `EDA/notebooks/01_clasificacion_grietas.ipynb` | Integridad, univariado/bivariado e hipótesis sobre METU real. | Insumos del modelo binario. | Ejecutado con salidas (muestra 2k/clase) |
+| EDA clasificación | `EDA/notebooks/01_clasificacion_grietas.ipynb` | Integridad, univariado/bivariado, hipótesis y robustez ante sombras sobre METU real. | Insumos del modelo binario. | Ejecutado con salidas (muestra 2k/clase) |
 | EDA segmentación | `EDA/notebooks/02_pipeline_segmentacion_severidad.ipynb` | Segmentación, distancia y severidad. | Insumos del sprint 3. | Ejecutado en simulación |
 | Reproducción EDA | `EDA/README.md` · `EDA/requirements.txt` | Comandos, dependencias y alcance de la muestra. | Reproducibilidad. | Vigente |
 

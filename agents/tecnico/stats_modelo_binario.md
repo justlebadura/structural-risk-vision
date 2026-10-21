@@ -81,6 +81,8 @@ La época se elige por **`ModelCheckpoint(monitor="val_auc", mode="max", save_be
 
 ## 6. Limitaciones
 
+> Bitácora de errores y decisiones: [`bitacora_errores.md`](bitacora_errores.md).
+
 - METU es un benchmark **casi saturado**: el estado del arte reporta >99% en esta tarea, por lo que un F1 ≈ 1.0 es esperable (y no debe leerse como 'problema resuelto').
 - Los índices del set de **test** están entrelazados con **train**, de modo que podrían compartir foto-fuente (METU genera 40k parches desde 458 fotos). La **validación** (bloque contiguo, sin solapamiento de índices) da una exactitud similar, lo que respalda el resultado.
 - METU son fotografías de grietas de cerca; los parches reales del pipeline provienen de la vista cenital (dominio distinto). La métrica **real** que importa es el desempeño en ese dominio, aún por medir.
