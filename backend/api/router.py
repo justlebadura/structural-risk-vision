@@ -15,11 +15,12 @@ from core.schemas import (
     ArucoDetection,
     CameraStatus,
     CaptureRequest,
+    ElementInclination,
     FilterResult,
     PreprocessResult,
     AnalyzeResponse,
 )
-from services import aruco, camera, filter as filter_svc, preprocess
+from services import aruco, camera, filter as filter_svc, inclination as inclination_svc, preprocess
 
 router = APIRouter(prefix="/api", tags=["api"])
 
@@ -45,7 +46,12 @@ def health() -> dict:
         "status": "ok",
         "mode": config.APP_MODE,
         "demo": config.IS_DEMO,
-        "sections": {"1_captura": True, "2_preprocesamiento": True, "3_filtro": True},
+        "sections": {
+            "1_captura": True,
+            "2_preprocesamiento": True,
+            "2_inclinacion": True,
+            "3_filtro": True,
+        },
         "filter_model": "loaded" if model.present else "pending",
         "filter_model_path": str(config.FILTER_MODEL_PATH),
     }
@@ -95,6 +101,17 @@ def aruco_detect(req: CaptureRequest) -> ArucoDetection:
         stability = _evaluate_stability(sensor)
     result = aruco.get_aruco_processor().detect(image, sensor_stability=stability)
     return ArucoDetection(**result)
+
+
+@router.post("/inclination", response_model=ElementInclination)
+def inclination_endpoint(req: CaptureRequest) -> ElementInclination:
+    """Estima la inclinación aparente del elemento con Canny + Hough."""
+    image = _decode(req.image)
+    if image is None:
+        raise HTTPException(status_code=400, detail="Imagen inválida o vacía.")
+    element = req.context.element if req.context else None
+    result = inclination_svc.detect_element_inclination(image, element=element)
+    return ElementInclination(**result)
 
 
 @router.post("/preprocess", response_model=PreprocessResult)
@@ -159,7 +176,9 @@ def analyze(req: CaptureRequest) -> AnalyzeResponse:
         ctx = req.context
         return AnalyzeResponse(
             job_id=str(uuid.uuid4()),
-            **demo.demo_analyze(),
+            mode=config.APP_MODE,
+            demo=True,
+            **demo.demo_analyze(element=ctx.element if ctx else None),
             surface=surface_info["surface"],
             surface_tilt_deg=surface_info["tilt_deg"],
             element=ctx.element if ctx else None,
@@ -189,11 +208,19 @@ def analyze(req: CaptureRequest) -> AnalyzeResponse:
 
     surface_info = camera.classify_surface(sensor)
     ctx = req.context
+    inclination_out = ElementInclination(
+        **inclination_svc.detect_element_inclination(
+            image, element=ctx.element if ctx else None
+        )
+    )
     return AnalyzeResponse(
         job_id=str(uuid.uuid4()),
+        mode=config.APP_MODE,
+        demo=False,
         aruco=aruco_out,
         preprocess=preprocess_out,
         filter=filter_out,
+        inclination=inclination_out,
         surface=surface_info["surface"],
         surface_tilt_deg=surface_info["tilt_deg"],
         element=ctx.element if ctx else None,

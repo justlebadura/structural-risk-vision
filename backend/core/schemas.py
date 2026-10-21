@@ -56,6 +56,21 @@ class ArucoDetection(BaseModel):
     message: Optional[str] = None
 
 
+class ElementInclination(BaseModel):
+    """Inclinación aparente del elemento estructural (Canny + Hough)."""
+    detected: bool
+    method: str = "canny_hough"
+    tilt_deg: Optional[float] = None              # desviación absoluta respecto al eje
+    tilt_signed_deg: Optional[float] = None       # desviación con signo
+    angle_deg: Optional[float] = None             # ángulo del eje dominante
+    reference: Optional[str] = None               # "vertical" | "horizontal" | "auto"
+    confidence: Optional[float] = None            # proporción de longitud inlier
+    lines_count: int = 0
+    inlier_lines: int = 0
+    reliable: bool = False
+    message: Optional[str] = None
+
+
 class PreprocessResult(BaseModel):
     cenital_image: Optional[str] = None   # imagen corregida base64
     width_cm: Optional[float] = None
@@ -89,9 +104,12 @@ class FilterResult(BaseModel):
 # ---------------------------------------------------------------------------
 class AnalyzeResponse(BaseModel):
     job_id: str
+    mode: Optional[str] = None               # "demo" | "prod"
+    demo: Optional[bool] = None              # True si el reporte es sintético
     aruco: ArucoDetection
     preprocess: Optional[PreprocessResult] = None
     filter: Optional[FilterResult] = None
+    inclination: Optional[ElementInclination] = None
     # Contexto de la inspección (Sección 1)
     surface: Optional[str] = None            # "techo" | "piso" | "pared" | "indeterminado"
     surface_tilt_deg: Optional[float] = None # ángulo del dispositivo respecto a la horizontal

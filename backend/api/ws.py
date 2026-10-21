@@ -12,7 +12,7 @@ import uuid
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
-from services import aruco, filter as filter_svc, preprocess
+from services import aruco, filter as filter_svc, inclination as inclination_svc, preprocess
 from services.images import decode_base64_image
 
 ws_router = APIRouter()
@@ -110,6 +110,15 @@ async def ws_analyze(websocket: WebSocket) -> None:
 
             await websocket.send_json(
                 {"type": "progress", "status": "ok",
+                 "payload": {"job_id": job_id, "step": "2_inclinacion", "status": 0.7}}
+            )
+            incl = inclination_svc.detect_element_inclination(
+                image,
+                element=(data.get("context") or {}).get("element"),
+            )
+
+            await websocket.send_json(
+                {"type": "progress", "status": "ok",
                  "payload": {"job_id": job_id, "step": "3_filtro", "status": 0.8}}
             )
             patches = preprocess.split_patches(cenital)
@@ -118,7 +127,8 @@ async def ws_analyze(websocket: WebSocket) -> None:
             await websocket.send_json(
                 {"type": "result", "status": "ok",
                  "payload": {"job_id": job_id, "aruco": aruco_res,
-                             "preprocess": pre, "filter": filt}}
+                             "preprocess": pre, "filter": filt,
+                             "inclination": incl}}
             )
     except WebSocketDisconnect:
         pass

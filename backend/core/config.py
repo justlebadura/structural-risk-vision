@@ -74,6 +74,16 @@ SURFACE_VERTICAL_AZ = 0.3    # |az| normalizado < este valor → pared
 # Ángulo máximo de inclinación del marcador para considerar la captura "cenital".
 MAX_TILT_DEG = 35.0
 
+# Inclinación del elemento estructural (Canny + Hough, sección 2b).
+CANNY_LOW_RATIO = 0.66
+CANNY_HIGH_RATIO = 1.33
+HOUGH_THRESHOLD = 45
+HOUGH_MIN_LINE_LENGTH_RATIO = 0.20
+HOUGH_MAX_LINE_GAP_RATIO = 0.03
+INCLINATION_AXIS_TOLERANCE_DEG = 30.0
+INCLINATION_MIN_CONFIDENCE = 0.25
+INCLINATION_MIN_LINES = 2
+
 # ---------------------------------------------------------------------------
 # Preprocesamiento (Sección 2)
 # ---------------------------------------------------------------------------

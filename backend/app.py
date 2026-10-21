@@ -16,12 +16,13 @@ app = FastAPI(
     title="Structural Risk Vision - Backend",
     description=(
         "Backend del sistema de detección de grietas e inclinación estructural.\n"
-        "Sprint 1 implementa las secciones 1-3 del Documento de Arquitectura "
-        "Optimizada: Captura (ArUco + giróscopo), Preprocesamiento (perspectiva "
-        "y escala real) y Filtro rápido (clasificación binaria).\n\n"
+        "Implementa las secciones 1-3 del Documento de Arquitectura Optimizada: "
+        "Captura (ArUco + giróscopo), Preprocesamiento (perspectiva y escala real), "
+        "Inclinación del elemento (Canny + Hough) y Filtro rápido (clasificación "
+        "binaria).\n\n"
         "Contrato del frontend: este OpenAPI (/docs)."
     ),
-    version="0.1.0",
+    version="0.2.0",
 )
 
 # CORS abierto en desarrollo (el frontend corre en otro origen).
@@ -43,6 +44,6 @@ def root() -> dict:
         "service": "Structural Risk Vision API",
         "docs": "/docs",
         "redoc": "/redoc",
-        "sprint": 1,
+        "sprint": 2,
         "sections": "1-3",
     }

@@ -42,8 +42,21 @@ def _demo_cenital_image() -> str:
     return encode_base64_image(img)
 
 
-def demo_analyze() -> dict:
+def demo_analyze(element: str | None = None) -> dict:
     """Reporte de ejemplo con la estructura de AnalyzeResponse."""
+    key = (element or "").strip().lower()
+    vertical = {"columna", "pilar", "muro", "pared"}
+    horizontal = {"viga", "losa", "piso", "techo"}
+    if key in vertical:
+        reference = "vertical"
+        tilt = 2.4
+    elif key in horizontal:
+        reference = "horizontal"
+        tilt = -1.8
+    else:
+        reference = "auto"
+        tilt = 2.1
+
     aruco = {
         "detected": True,
         "marker_id": config.MARKER_DICT_ID,
@@ -75,4 +88,22 @@ def demo_analyze() -> dict:
         "patches": [],
         "message": "Modo demo: resultado sintético de ejemplo.",
     }
-    return {"aruco": aruco, "preprocess": preprocess, "filter": filter_res}
+    inclination = {
+        "detected": True,
+        "method": "canny_hough",
+        "tilt_deg": abs(tilt),
+        "tilt_signed_deg": tilt,
+        "angle_deg": (90.0 if reference == "vertical" else 0.0) + tilt,
+        "reference": reference,
+        "confidence": 0.78,
+        "lines_count": 12,
+        "inlier_lines": 8,
+        "reliable": True,
+        "message": "Modo demo: inclinación sintética de ejemplo.",
+    }
+    return {
+        "aruco": aruco,
+        "preprocess": preprocess,
+        "filter": filter_res,
+        "inclination": inclination,
+    }
