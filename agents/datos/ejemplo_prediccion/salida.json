@@ -1,0 +1,42 @@
+{
+  "ejemplo": "prediccion_ejemplo",
+  "descripcion": "Escena reproducible: textura de grieta real de METU + marcador ArUco sintético. No es una inspección de campo.",
+  "imagen_fuente": "EDA/data/metu/test/Positive/01848.jpg",
+  "mode": "inferencia_directa",
+  "demo": false,
+  "aruco": {
+    "detected": true,
+    "marker_id": 6,
+    "scale_cm_per_px": 0.045871559633027525,
+    "tilt_deg": 0.0,
+    "cenital_ok": true
+  },
+  "preprocess": {
+    "width_cm": 29.36,
+    "height_cm": 29.36,
+    "scale_cm_per_px": 0.045871559633027525,
+    "total_patches": 100
+  },
+  "filter": {
+    "model_present": true,
+    "total_patches": 100,
+    "crack_patches": 40,
+    "no_crack_patches": 60,
+    "verdict": "GRIETA",
+    "confidence": 0.4,
+    "threshold": 0.5
+  },
+  "inclination": {
+    "detected": true,
+    "method": "canny_hough",
+    "tilt_deg": 2.94,
+    "tilt_signed_deg": 2.94,
+    "angle_deg": 92.94,
+    "reference": "vertical",
+    "confidence": 0.9273,
+    "lines_count": 13,
+    "inlier_lines": 11,
+    "reliable": true,
+    "message": "Inclinación estimada con Canny + Hough."
+  }
+}
