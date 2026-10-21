@@ -1,8 +1,23 @@
-import type { CaptureContext, InspectionReport, SensorData } from '../types/inspection';
+import type { CaptureContext, HealthResponse, InspectionReport, SensorData } from '../types/inspection';
 
 /** Endpoint HTTP de la API local. Configurable vía EXPO_PUBLIC_API_URL. */
-const API_BASE = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.27:8000';
+export const API_BASE = (process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8000').replace(/\/+$/, '');
 const API_URL = `${API_BASE}/api/analyze`;
+
+/** Consulta el estado del backend y del modelo de inferencia. */
+export async function getHealth(timeoutMs = 6000): Promise<HealthResponse> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetch(`${API_BASE}/api/health`, { signal: controller.signal });
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    return response.json();
+  } finally {
+    clearTimeout(timer);
+  }
+}
 
 /**
  * Envía una fotografía (base64) + sensores + contexto de ubicación al backend
@@ -20,7 +35,7 @@ export async function analyzeImage(
   });
 
   if (!response.ok) {
-    throw new Error(`Error en el servidor: HTTP Status ${response.status}`);
+    throw new Error(`Error en ${API_URL}: HTTP ${response.status}`);
   }
 
   return response.json();

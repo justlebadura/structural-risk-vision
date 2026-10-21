@@ -3,7 +3,7 @@ import { StyleSheet, View, StatusBar, ActivityIndicator, Alert } from 'react-nat
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Gyroscope, Accelerometer } from 'expo-sensors';
 import { colors } from '../theme/colors';
-import { analyzeImage } from '../api/inspect';
+import { API_BASE, analyzeImage } from '../api/inspect';
 import type { CaptureContext, InspectionReport, SensorData } from '../types/inspection';
 import { PermissionView } from '../components/PermissionView';
 import { CameraOverlay } from '../components/CameraOverlay';
@@ -63,7 +63,7 @@ export function CameraScreen({ context, onBack }: CameraScreenProps) {
         setIsProcessing(true);
 
         const photo = await cameraRef.current.takePictureAsync({
-          quality: 0.8,
+          quality: 0.7,
           base64: true,
         });
 
@@ -77,7 +77,7 @@ export function CameraScreen({ context, onBack }: CameraScreenProps) {
         console.error('Error enviando la foto al backend:', error);
         Alert.alert(
           'Error de Inspección',
-          'No se pudo conectar con el servidor backend. Revisa que tu API esté en ejecución en la red local.'
+          `No se pudo conectar con ${API_BASE}. Revisa que el backend esté en ejecución y que EXPO_PUBLIC_API_URL apunte a tu IP local.`
         );
       } finally {
         setIsProcessing(false);

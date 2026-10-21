@@ -4,5 +4,7 @@ python-multipart>=0.0.9
 numpy>=1.26
 opencv-python>=4.9
 pydantic>=2.7
+# Intérprete TFLite. Si no hay wheel para tu versión de Python, instala
+# tensorflow: BinaryModel usa tf.lite.Interpreter como fallback.
 tflite-runtime>=2.14
 python-dotenv>=1.0
