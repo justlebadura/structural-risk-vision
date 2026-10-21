@@ -38,6 +38,8 @@ train/val. Cifras de titular en [`../datos/cifras_clave.md`](../datos/cifras_cla
 
 - Si `filter.tflite` **no existe**, el backend responde `model_present=false` y
   `verdict="SIN_MODELO"` (nunca un mock silencioso).
+- Verificación rápida: `python backend/scripts/verificar_inferencia.py`.
+- Predicción de ejemplo completa: `python backend/scripts/prediccion_ejemplo.py`.
 - Entrenamiento y evaluación: [`../guias/entrenamiento.md`](../guias/entrenamiento.md).
 
 ## Modelo segmentador (`model_segmentator`)
@@ -61,11 +63,12 @@ inferencia (referencia: `EDA/notebooks/02_pipeline_segmentacion_severidad.ipynb`
 ```
 Frontend ── POST /api/analyze ──► Backend
                                    ├─ aruco.detect()          (services/aruco)
+                                   ├─ inclination.detect_element_inclination() (services/inclination)
                                    ├─ preprocess.split_patches() (services/preprocess)
                                    ├─ filter.classify_patches() → model_binary
                                    │      └─ BinaryModel.predict(patch) → P(grieta)
                                    └─ responde AnalyzeResponse
-Frontend ◄─────────────────────────── reporte
+Frontend ◄─────────────────────────── reporte (incluye inclination)
 ```
 
 ## Relación con el EDA

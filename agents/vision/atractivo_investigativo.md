@@ -32,12 +32,18 @@ El filtro rápido descarta parches sanos **antes** de la etapa costosa
 (segmentación/severidad), reduciendo cómputo. Es una arquitectura de
 **razonamiento jerárquico**: de lo barato a lo caro.
 
-### 2.4 Severidad por transformada de distancia
+### 2.4 Inclinación aparente del elemento
+Canny + Hough detecta las rectas dominantes del elemento y estima su desviación
+respecto al eje vertical/horizontal, con confianza basada en la longitud de las
+rectas inlier. Es una primera medición geométrica explicable que se integra al
+reporte sin depender del modelo de grietas.
+
+### 2.5 Severidad por transformada de distancia
 El grosor de la grieta se estima con la **transformada de distancia** sobre la
 máscara segmentada y se mapea a niveles de riesgo (Nivel 1–3), alineando la
 salida con normativas de inspección.
 
-### 2.5 Rigor metodológico en el EDA
+### 2.6 Rigor metodológico en el EDA
 Los cuadernos distinguen explícitamente **datos reales vs simulación** y evitan
 razonamientos circulares (la severidad se testea contra el grosor **medido**, no
 se deriva de él). Es un ejemplo de **honestidad de datos** en ML académico.
@@ -81,4 +87,4 @@ Cifras generadas automáticamente desde
 - **F1 ≈ 1.0** y **ROC-AUC ≈ 1.0** en test balanceado.
 - Modelo de **~cientos de KB** y **unos pocos ms/parche** en CPU (U-Net ligera).
 - Dataset de **40,000 imágenes** (METU, Özgenel) con splits oficiales.
-- **3 secciones** de pipeline, **8 endpoints REST** + **2 WebSockets**.
+- **3 secciones** de pipeline (+ inclinación 2b), **9 endpoints REST** + **2 WebSockets**.

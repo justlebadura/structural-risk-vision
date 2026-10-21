@@ -14,6 +14,7 @@ capas **Frontend → Backend → Modelos**.
                                                       │  ├─ core/   (config, schemas,│
                                                       │  │           model_loader)    │
                                                       │  ├─ services/(aruco, camera, │
+                                                      │  │           inclination,     │
                                                       │  │           preprocess,      │
                                                       │  │           filter, images,  │
                                                       │  │           demo)            │
@@ -43,6 +44,7 @@ structural-risk-vision/
 │   ├── services/
 │   │   ├── aruco.py            # sección 2: ArUco + ángulo + homografía (cenital)
 │   │   ├── camera.py           # sección 1: estabilidad (giróscopo) + superficie (acelerómetro)
+│   │   ├── inclination.py      # sección 2b: inclinación Canny + Hough
 │   │   ├── preprocess.py       # sección 2: vista cenital, parches 64x64
 │   │   ├── filter.py           # sección 3: clasificación binaria por parches
 │   │   ├── images.py           # codificar/decodificar base64
@@ -50,18 +52,21 @@ structural-risk-vision/
 │   ├── model/
 │   │   ├── model_binary/       # filtro binario (binary_model.py + README)
 │   │   └── model_segmentator/  # segmentador (placeholder, sprint 3)
+│   ├── scripts/                # verificar_inferencia, prediccion_ejemplo
 │   └── requirements.txt
 ├── frontend/                   # App móvil Expo / React Native
 │   ├── App.tsx                 # navegación mínima (menú → ubicación → cámara)
 │   └── src/
-│       ├── api/inspect.ts      # cliente HTTP hacia /api/analyze (+ sensores/contexto)
+│       ├── api/inspect.ts      # cliente HTTP: /api/analyze + /api/health
 │       ├── components/         # PermissionView, CameraOverlay, ShutterButton, ResultModal
 │       ├── constants/          # layout.ts, inspection.ts (elementos estructurales)
 │       ├── screens/            # MenuScreen, LocationScreen, CameraScreen
 │       ├── theme/colors.ts
 │       └── types/inspection.ts # tipos del reporte
 ├── EDA/
-│   └── notebooks/              # análisis exploratorio (01 clasificación, 02 segmentación)
+│   ├── notebooks/              # análisis exploratorio (01 clasificación, 02 segmentación)
+│   ├── README.md               # reproducción del EDA
+│   └── requirements.txt        # dependencias del EDA
 ├── agents/                     # documentación para agentes (este directorio)
 └── graphify-out/               # índice estructural del código (generado)
 ```
@@ -74,10 +79,14 @@ structural-risk-vision/
    inclinación** (sin calibración) y calcula la homografía y la escala `cm/píxel`.
 3. **Preprocesamiento** — `services/preprocess.py` **rectifica la perspectiva**
    (vista cenital fronto-paralela) y divide en parches `64×64`.
-4. **Filtro rápido** — `services/filter.py` usa el `model_binary` para
+4. **Inclinación del elemento** — `services/inclination.py` aplica Canny +
+   Hough sobre la imagen original y estima la desviación aparente respecto al
+   eje vertical/horizontal según el elemento indicado.
+5. **Filtro rápido** — `services/filter.py` usa el `model_binary` para
    clasificar cada parche y devolver el veredicto.
-5. **Respuesta** — `AnalyzeResponse` con `aruco` (incl. `tilt_deg`, `cenital_ok`),
-   `preprocess`, `filter` y el contexto (`surface`, `element`, `location`).
+6. **Respuesta** — `AnalyzeResponse` con `mode`, `demo`, `aruco` (incl.
+   `tilt_deg`, `cenital_ok`), `preprocess`, `filter`, `inclination` y el
+   contexto (`surface`, `element`, `location`).
 
 > La **superficie** (techo / piso / pared) se deriva del acelerómetro
 > (`services/camera.py::classify_surface`); el **elemento** (columna, viga, muro…)

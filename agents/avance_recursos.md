@@ -21,7 +21,7 @@ modelos entrenados, configuraciones experimentales, figuras, resultados y
 documentación de soporte. Los recursos se actualizarán progresivamente de acuerdo
 con los avances alcanzados en cada etapa del proyecto.
 
-> **Estado de referencia:** rama `development` · último commit `f6cfe62`.
+> **Estado de referencia:** rama `development` · consultar el último commit con `git log -1`.
 
 ---
 
@@ -58,13 +58,16 @@ con los avances alcanzados en cada etapa del proyecto.
 
 | Recurso | Ubicación | Descripción | Propósito | Estado |
 |---------|-----------|-------------|-----------|--------|
-| API REST | `backend/api/router.py` | 8 endpoints `/api/*` del pipeline. | Servicio al frontend. | Sprint 1–2 |
+| API REST | `backend/api/router.py` | 9 endpoints `/api/*` del pipeline, incluyendo inclinación. | Servicio al frontend. | Sprint 1–3 |
 | WebSocket | `backend/api/ws.py` | `/ws/camera` y `/ws/analyze`. | Streaming/progreso. | Sprint 1 |
 | Configuración | `backend/core/config.py` | Constantes y carga del `.env` raíz. | Configuración central. | Vigente |
 | Esquemas | `backend/core/schemas.py` | Contratos Pydantic de la API. | Único contrato. | Vigente |
 | Carga de modelos | `backend/core/model_loader.py` | Singleton del modelo binario. | Integración backend↔modelo. | Vigente |
 | Captura/superficie | `backend/services/camera.py` | Estabilidad (giróscopo) y superficie (acelerómetro). | Sección 1. | Vigente |
 | ArUco/normalización | `backend/services/aruco.py` | Ángulo, homografía y escala (vista cenital). | Sección 2. | Vigente |
+| Inclinación del elemento | `backend/services/inclination.py` | Canny + Hough, referencia vertical/horizontal y confianza. | Sección 2b. | Vigente |
+| Verificación de inferencia | `backend/scripts/verificar_inferencia.py` | Comprueba modelo TFLite y ejecuta una predicción. | Preparar app/backend. | Generado |
+| Predicción de ejemplo | `backend/scripts/prediccion_ejemplo.py` | Escena METU + ArUco, JSON e imagen anotada. | Evidencia end-to-end. | Generado |
 | Preprocesamiento | `backend/services/preprocess.py` | Vista cenital y parches 64×64. | Sección 2. | Vigente |
 | Filtro binario | `backend/services/filter.py` | Clasificación por parches. | Sección 3. | Vigente |
 | Modo demo | `backend/services/demo.py` | Reporte sintético. | Validar frontend sin hardware. | Vigente |
@@ -73,14 +76,15 @@ con los avances alcanzados en cada etapa del proyecto.
 | **Entrenamiento (IA)** | `backend/model/model_binary/train.py` | Entrena y exporta TFLite. | Reproducir entrenamiento. | Sprint 2 |
 | **Evaluación (IA)** | `backend/model/model_binary/evaluate.py` | Métricas y reporte. | Validación. | Sprint 2 |
 | Inferencia TFLite | `backend/model/model_binary/binary_model.py` | Carga `filter.tflite`. | Runtime del backend. | Sprint 2 |
-| Frontend | `frontend/src/**` | Pantallas, componentes y cliente API. | App móvil. | Vigente |
+| Frontend | `frontend/src/**` | Pantallas, componentes, cliente API y verificación de `/api/health`. | App móvil e inferencia real. | Vigente |
 
 ## 5. Notebooks y análisis (EDA)
 
 | Recurso | Ubicación | Descripción | Propósito | Estado |
 |---------|-----------|-------------|-----------|--------|
-| EDA clasificación | `EDA/notebooks/01_clasificacion_grietas.ipynb` | Integridad, univariado/bivariado e hipótesis. | Insumos del modelo binario. | Vigente |
-| EDA segmentación | `EDA/notebooks/02_pipeline_segmentacion_severidad.ipynb` | Segmentación, distancia y severidad. | Insumos del sprint 3. | Vigente |
+| EDA clasificación | `EDA/notebooks/01_clasificacion_grietas.ipynb` | Integridad, univariado/bivariado e hipótesis sobre METU real. | Insumos del modelo binario. | Ejecutado con salidas (muestra 2k/clase) |
+| EDA segmentación | `EDA/notebooks/02_pipeline_segmentacion_severidad.ipynb` | Segmentación, distancia y severidad. | Insumos del sprint 3. | Ejecutado en simulación |
+| Reproducción EDA | `EDA/README.md` · `EDA/requirements.txt` | Comandos, dependencias y alcance de la muestra. | Reproducibilidad. | Vigente |
 
 ## 6. Conjuntos de datos
 
@@ -119,13 +123,15 @@ con los avances alcanzados en cada etapa del proyecto.
 | Cifras clave | [`datos/cifras_clave.md`](datos/cifras_clave.md) | Titulares (F1, recall, AUC, tamaño, latencia). | Presentaciones. | Generado |
 | Matrices de confusión | `agents/tecnico/confusion_{unet,mobilenetv2}.png` | TP/TN/FP/FN por modelo. | Evidencia visual. | Generado |
 | Curvas de entrenamiento | `agents/tecnico/training_{unet,mobilenetv2}.png` | Loss y AUC train/val por época. | Diagnosticar over/underfitting. | Generado |
+| Predicción de ejemplo | `agents/datos/ejemplo_prediccion/` | Entrada, salida JSON e imagen anotada. | Evidencia end-to-end. | Generado |
+| Reporte de ejemplo | `agents/tecnico/ejemplo_prediccion.md` | Lectura y reproducción del ejemplo. | Documentación. | Vigente |
 | Índice de código | `graphify-out/graph.json` | Grafo estructural del código. | Navegación. | Generado |
 
 ## 10. Convenciones de versionado
 
-- **Se versionan:** código, documentación (`agents/`), notebooks, configuraciones
-  de ejemplo (`.env.example`, `requirements*.txt`) y resultados tabulados
-  (`agents/datos/*`).
+- **Se versionan:** código, documentación (`agents/`), notebooks ejecutados,
+  configuraciones de ejemplo (`.env.example`, `requirements*.txt`) y resultados
+  tabulados (`agents/datos/*`).
 - **No se versionan** (`.gitignore`): `*.tflite`, `artifacts/` (checkpoints
   `.keras` e historiales), `EDA/data/` (datasets) y `graphify-out/`. Se regeneran
   localmente con los scripts correspondientes.

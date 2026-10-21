@@ -30,6 +30,7 @@ documentos técnicos, datos y guías.
 | [`tecnico/api_contrato.md`](tecnico/api_contrato.md) | Contrato REST + WebSocket (endpoints y esquemas). |
 | [`tecnico/modelos.md`](tecnico/modelos.md) | Modelos binario y segmentador: contrato e integración. |
 | [`tecnico/stats_modelo_binario.md`](tecnico/stats_modelo_binario.md) | Métricas del modelo binario (matriz de confusión, F1, recall…). |
+| [`tecnico/ejemplo_prediccion.md`](tecnico/ejemplo_prediccion.md) | Predicción de ejemplo del pipeline completo (JSON + imagen anotada). |
 
 ### Datos
 | Documento | Contenido |
@@ -38,11 +39,13 @@ documentos técnicos, datos y guías.
 | [`datos/cifras_clave.md`](datos/cifras_clave.md) | Cifras de titular (generado desde `metricas.json`). |
 | [`datos/metricas.json`](datos/metricas.json) | Fuente única de verdad de las métricas del modelo. |
 | [`datos/estadisticas.csv`](datos/estadisticas.csv) | Métricas tabuladas (generado). |
+| [`datos/ejemplo_prediccion/`](datos/ejemplo_prediccion/) | Entrada, salida JSON e imagen anotada de una predicción concreta. |
 
 ### Guías (cómo hacer)
 | Documento | Contenido |
 |-----------|-----------|
-| [`guias/desarrollo.md`](guias/desarrollo.md) | Correr backend/frontend, `.env`, convenciones. |
+| [`guias/desarrollo.md`](guias/desarrollo.md) | Correr backend/frontend, inferencia real, EDA y convenciones. |
+| [`../EDA/README.md`](../EDA/README.md) | Reproducción del EDA con METU y salidas versionadas. |
 | [`guias/entrenamiento.md`](guias/entrenamiento.md) | Entrenar/evaluar el modelo binario. |
 | [`guias/graphify.md`](guias/graphify.md) | Navegar el código con `graphify-out/graph.json`. |
 

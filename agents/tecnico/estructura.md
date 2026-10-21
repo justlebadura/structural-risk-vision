@@ -8,7 +8,7 @@ structural-risk-vision/
 ├── backend/                         # API FastAPI (pipeline secciones 1–3)
 │   ├── app.py                       # entrypoint: monta REST + WS, CORS
 │   ├── api/
-│   │   ├── router.py                # 8 endpoints REST (/api/*)
+│   │   ├── router.py                # 9 endpoints REST (/api/*)
 │   │   └── ws.py                    # 2 WebSockets (/ws/camera, /ws/analyze)
 │   ├── core/
 │   │   ├── config.py                # configuración central + carga del .env raíz
@@ -17,6 +17,7 @@ structural-risk-vision/
 │   ├── services/
 │   │   ├── aruco.py                 # sección 2: ArUco + ángulo + homografía (cenital)
 │   │   ├── camera.py                # sección 1: estabilidad (giróscopo) + superficie (acelerómetro)
+│   │   ├── inclination.py           # sección 2b: inclinación Canny + Hough
 │   │   ├── preprocess.py            # sección 2: vista cenital + parches 64×64
 │   │   ├── filter.py                # sección 3: clasificación binaria por parches
 │   │   ├── images.py                # (de)codificación base64
@@ -29,13 +30,16 @@ structural-risk-vision/
 │   │   │   ├── train.py             #   entrenamiento + export TFLite
 │   │   │   └── evaluate.py          #   métricas + reporte de stats
 │   │   └── model_segmentator/       # segmentador semántico (sprint 3, placeholder)
+│   ├── scripts/
+│   │   ├── verificar_inferencia.py # comprueba modelo TFLite + predicción
+│   │   └── prediccion_ejemplo.py   # escena + JSON + imagen anotada
 │   └── requirements.txt             # runtime del backend
 │
 ├── frontend/                        # App móvil Expo / React Native
 │   ├── App.tsx                      # navegación mínima: menú → ubicación → cámara
 │   ├── metro.config.js              # lee el .env de la raíz
 │   └── src/
-│       ├── api/inspect.ts           # cliente HTTP → /api/analyze (+ sensores/contexto)
+│       ├── api/inspect.ts           # cliente HTTP → /api/analyze + /api/health
 │       ├── components/              # PermissionView, CameraOverlay, ShutterButton, ResultModal
 │       ├── constants/               # layout.ts, inspection.ts (elementos estructurales)
 │       ├── screens/                 # MenuScreen, LocationScreen, CameraScreen
@@ -45,16 +49,18 @@ structural-risk-vision/
 │
 ├── EDA/                             # Análisis Exploratorio de Datos
 │   ├── notebooks/
-│   │   ├── 01_clasificacion_grietas.ipynb          # EDA clasificación binaria
-│   │   └── 02_pipeline_segmentacion_severidad.ipynb # segmentación y severidad
-│   └── data/                        # datasets (METU), NO versionado
+│   │   ├── 01_clasificacion_grietas.ipynb          # EDA real con salidas (METU)
+│   │   └── 02_pipeline_segmentacion_severidad.ipynb # segmentación (simulación)
+│   ├── data/                        # datasets (METU), NO versionado
+│   ├── README.md                    # reproducción del EDA
+│   └── requirements.txt             # dependencias del EDA
 │
 ├── agents/                          # ★ documentación
 │   ├── README.md                    # índice de navegación
 │   ├── config/settings.json         # configuración de agente (no es doc)
 │   ├── vision/                      # objetivos, atractivo, presentación
 │   ├── tecnico/                     # arquitectura, estructura, API, modelos, stats
-│   ├── datos/                       # datasets y estadísticas
+│   ├── datos/                       # datasets, estadísticas y ejemplo_prediccion/
 │   └── guias/                       # desarrollo, entrenamiento, graphify
 │
 ├── graphify-out/                    # índice estructural del código (generado)
@@ -79,11 +85,13 @@ Cámara móvil
                  Sección 1: Captura    Sección 2: ArUco+pre    Sección 3: Filtro
                  (estabilidad +        (ángulo → homografía,   (model_binary:
                   superficie)           escala, parches 64×64)  U-Net → P(grieta))
+                        │                     │
+                        └── Sección 2b: inclinación Canny+Hough
                         └─────────────────────┼─────────────────────┘
                                               ▼
                                     AnalyzeResponse (JSON)
-                                    (aruco · preprocess · filter ·
-                                     surface · element · location)
+                                    (mode · demo · aruco · preprocess · filter ·
+                                     inclination · surface · element · location)
                                               │
    ◄──────────────────────────────────────────┘
    [Frontend] muestra reporte: veredicto + vista cenital + ubicación + confianza

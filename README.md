@@ -33,11 +33,16 @@ real cm/píxel) → **③ filtro binario de grietas** (U-Net muy ligera → TFLi
 | Backend (pipeline secciones 1–3, API REST + WebSocket) | ✅ Funcionando |
 | Frontend móvil (Expo / React Native) | ✅ Funcionando |
 | Modelo binario de grietas (U-Net ligera) | ✅ Entrenado y desplegado |
+| Inclinación del elemento (Canny + Hough) | ✅ Funcionando |
+| EDA real ejecutado y versionado (METU) | ✅ Con salidas |
+| App preparada para inferencia real (`APP_MODE=prod`) | ✅ Funcionando |
 | Segmentación y severidad (sprint 3) | 🚧 En desarrollo |
 | Documentación (`agents/`) | ✅ Completa |
 
 > Cifras reales del modelo y matrices de confusión en
 > [`agents/tecnico/stats_modelo_binario.md`](agents/tecnico/stats_modelo_binario.md).
+> Predicción de ejemplo del pipeline completo en
+> [`agents/datos/ejemplo_prediccion/`](agents/datos/ejemplo_prediccion/).
 
 ---
 
@@ -150,9 +155,52 @@ Escanea el QR con Expo Go
 1. **Menú** — pantalla inicial ligera (no entra directo a la cámara).
 2. **Ubicación** — se elige el **elemento estructural** (columna, viga, muro, losa, piso, techo, otro) y se describe la ubicación.
 3. **Cámara** — se encuadra la grieta junto al marcador ArUco. La app lee **giróscopo** (estabilidad) y **acelerómetro** (superficie: techo/piso/pared) y envía todo con la foto.
-4. **Reporte** — veredicto del filtro, vista cenital rectificada, superficie, elemento, inclinación de captura y confianza.
+4. **Reporte** — veredicto del filtro, vista cenital rectificada, superficie, elemento, inclinación de captura, inclinación del elemento y confianza.
 
-> El **ángulo del marcador ArUco** rectifica la imagen a **vista cenital** (fronto-paralela) y la **superficie** se infiere del acelerómetro. Detalles en [`agents/tecnico/arquitectura.md`](agents/tecnico/arquitectura.md) y contrato en [`agents/tecnico/api_contrato.md`](agents/tecnico/api_contrato.md).
+> El **ángulo del marcador ArUco** rectifica la imagen a **vista cenital** (fronto-paralela) y la **superficie** se infiere del acelerómetro. La **inclinación del elemento** se estima con Canny + Hough sobre la imagen original y se reporta como ángulo aparente respecto al eje vertical/horizontal. Detalles en [`agents/tecnico/arquitectura.md`](agents/tecnico/arquitectura.md) y contrato en [`agents/tecnico/api_contrato.md`](agents/tecnico/api_contrato.md).
+
+---
+
+## 🔎 Inferencia real desde la app
+
+1. Verifica que exista el modelo local (no versionado):
+
+```bash
+python backend/scripts/verificar_inferencia.py
+```
+
+2. Activa el pipeline real en el `.env` de la raíz:
+
+```bash
+APP_MODE=prod
+EXPO_PUBLIC_API_URL=http://<IP-LAN-de-tu-equipo>:8000
+```
+
+3. Levanta el backend y la app:
+
+```bash
+cd backend && uvicorn app:app --host 0.0.0.0 --port 8000
+cd frontend && npm start
+```
+
+4. En la app, pulsa **Probar conexión** en el menú. Debe mostrar
+   `inferencia real` y `Modelo: cargado`. Si muestra `demo`, revisa `APP_MODE`;
+   si muestra `no disponible`, coloca `filter.tflite`.
+
+> La app muestra un badge **Modo demo** o **Inferencia real** en el reporte, y
+> advierte cuando el backend responde `SIN_MODELO`.
+
+### Predicción de ejemplo
+
+Escena reproducible con una grieta real de METU + marcador ArUco sintético:
+
+| Entrada | Salida anotada |
+|---------|----------------|
+| ![entrada](agents/datos/ejemplo_prediccion/entrada.jpg) | ![salida](agents/datos/ejemplo_prediccion/salida.png) |
+
+- JSON: [`agents/datos/ejemplo_prediccion/salida.json`](agents/datos/ejemplo_prediccion/salida.json)
+- Generar de nuevo: `python backend/scripts/prediccion_ejemplo.py`
+- Documentación: [`agents/tecnico/ejemplo_prediccion.md`](agents/tecnico/ejemplo_prediccion.md)
 
 ---
 
@@ -168,6 +216,7 @@ Escanea el QR con Expo Go
 | **Correr** backend/frontend y configurar `.env` | [`agents/guias/desarrollo.md`](agents/guias/desarrollo.md) |
 | **Entrenar/evaluar** el modelo binario | [`agents/guias/entrenamiento.md`](agents/guias/entrenamiento.md) |
 | Ver **métricas** del modelo (F1, confusión, recall, selección de época, overfitting) | [`agents/tecnico/stats_modelo_binario.md`](agents/tecnico/stats_modelo_binario.md) |
+| Ver una **predicción de ejemplo** del pipeline completo | [`agents/datos/ejemplo_prediccion/`](agents/datos/ejemplo_prediccion/) |
 | **Cifras** listas para presentación | [`agents/datos/cifras_clave.md`](agents/datos/cifras_clave.md) |
 | Hacer una **presentación** con call-to-actions | [`agents/vision/presentacion.md`](agents/vision/presentacion.md) |
 | **Navegar el código** (índice estructural) | [`agents/guias/graphify.md`](agents/guias/graphify.md) |
@@ -179,9 +228,9 @@ Escanea el QR con Expo Go
 
 ```
 structural-risk-vision/
-├── backend/            # API FastAPI + modelos (backend/model/model_binary|model_segmentator)
+├── backend/            # API FastAPI + modelos + scripts de inferencia
 ├── frontend/           # App móvil Expo / React Native (frontend/src/)
-├── EDA/                # Cuadernos Jupyter + datasets (EDA/notebooks/, EDA/data/)
+├── EDA/                # Cuadernos Jupyter + datasets + README de reproducción
 ├── agents/             # Documentación (vision/, tecnico/, datos/, guias/)
 ├── graphify-out/       # Índice estructural del código (generado, no versionado)
 ├── .env.example        # Plantilla de configuración (raíz)
@@ -196,7 +245,7 @@ structural-risk-vision/
 | Sprint | Alcance | Estado |
 |:------:|---------|:------:|
 | **1** | Captura, ArUco, preprocesamiento y contrato del filtro binario | ✅ Hecho |
-| **2** | Modelo binario entrenado (U-Net ligera) e inclinación con OpenCV | ✅ Hecho |
+| **2** | Modelo binario entrenado (U-Net ligera), inclinación Canny+Hough y app lista para inferencia | ✅ Hecho |
 | **3** | Segmentación, distancia, clasificación multiclase (Nivel 1–3), Grad-CAM y riesgo | 🚧 En desarrollo |
 
 ---

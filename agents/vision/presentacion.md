@@ -54,6 +54,10 @@ Resultado: **veredicto + vista cenital + confianza**, desde el móvil.
 - Dataset **METU (40,000 imágenes, Özgenel)** con splits oficiales.
 - EDA que distingue **datos reales de simulación** y evita conclusiones circulares.
 
+> **Predicción de ejemplo:** ver
+> [`../datos/ejemplo_prediccion/salida.json`](../datos/ejemplo_prediccion/salida.json)
+> y la imagen anotada en la misma carpeta.
+
 > **Falsos negativos (grietas no vistas):** tomar el valor de
 > [`../tecnico/stats_modelo_binario.md`](../tecnico/stats_modelo_binario.md)
 > (lo que más importa en seguridad).
@@ -72,7 +76,8 @@ Resultado: **veredicto + vista cenital + confianza**, desde el móvil.
 ## Diapositiva 7 — Estado y hoja de ruta
 
 - **Sprint 1 (hecho):** captura, ArUco, preprocesamiento, filtro binario + API.
-- **Sprint 2 (hecho):** modelo binario entrenado (U-Net ligera), inclinación.
+- **Sprint 2 (hecho):** modelo binario entrenado (U-Net ligera), inclinación
+  del elemento con Canny + Hough y app lista para inferencia real.
 - **Sprint 3:** segmentación, severidad (Nivel 1–3), Grad-CAM y score de riesgo.
 
 ---
@@ -81,7 +86,7 @@ Resultado: **veredicto + vista cenital + confianza**, desde el móvil.
 
 1. Abrir la app móvil.
 2. Enfocar una grieta + marcador ArUco.
-3. Capturar → ver el **reporte** (veredicto, escala, confianza).
+3. Capturar → ver el **reporte** (veredicto, escala, confianza, inclinación del elemento).
 
 *(En `APP_MODE=demo` el backend responde un reporte sintético para demostrar el
 flujo sin hardware.)*
@@ -92,16 +97,17 @@ flujo sin hardware.)*
 
 > Cierra con acciones **concretas y accesibles**.
 
-### 1. Prueba la demo
+### 1. Prueba la inferencia real
 ```bash
-cd backend && pip install -r requirements.txt && uvicorn app:app --reload
+cd backend && pip install -r requirements.txt && uvicorn app:app --host 0.0.0.0 --port 8000
+# configura APP_MODE=prod y EXPO_PUBLIC_API_URL en el .env de la raíz
 # abre http://localhost:8000/docs
 ```
 **Acción:** ejecuta el pipeline y comparte tu resultado.
 
 ### 2. Únete al desarrollo
-- Áreas abiertas: **segmentación** (sprint 3), **inclinación**, **Grad-CAM**,
-  **app móvil**, **datasets**.
+- Áreas abiertas: **segmentación** (sprint 3), **Grad-CAM**, **app móvil**,
+  **validación con fotos de campo** y **datasets**.
 - Empieza por [`guias/desarrollo.md`](../guias/desarrollo.md).
 
 ### 3. Colabora con datos
@@ -136,4 +142,4 @@ cd backend && pip install -r requirements.txt && uvicorn app:app --reload
 - F1 / Recall / ROC-AUC de la U-Net ligera → ver `cifras_clave.md`.
 - Tamaño, parámetros y latencia → ver `cifras_clave.md`.
 - Dataset **40,000** imágenes (METU) · test balanceado.
-- Pipeline de **3 secciones** · **8 endpoints** REST · **2 WebSockets**.
+- Pipeline de **3 secciones** (+ inclinación 2b) · **9 endpoints** REST · **2 WebSockets**.

@@ -20,6 +20,7 @@ la documentación interactiva vive en `http://localhost:8000/docs`.
 | `POST` | `/api/camera/stop` | Detiene una sesión (`?session_id=`) |
 | `POST` | `/api/capture` | Registra un frame + sensor en la sesión (`?session_id=`) |
 | `POST` | `/api/aruco/detect` | Detecta el marcador ArUco (sección 2) |
+| `POST` | `/api/inclination` | Inclinación aparente del elemento (Canny + Hough) |
 | `POST` | `/api/preprocess` | Vista cenital + escala + parches (sección 2) |
 | `POST` | `/api/filter` | Filtro binario sobre los parches (sección 3) |
 | `POST` | `/api/analyze` | Pipeline completo (secciones 1–3) → `AnalyzeResponse` |
@@ -47,7 +48,12 @@ la documentación interactiva vive en `http://localhost:8000/docs`.
   "status": "ok",
   "mode": "demo",          // APP_MODE
   "demo": true,
-  "sections": { "1_captura": true, "2_preprocesamiento": true, "3_filtro": true },
+  "sections": {
+    "1_captura": true,
+    "2_preprocesamiento": true,
+    "2_inclinacion": true,
+    "3_filtro": true
+  },
   "filter_model": "pending",      // "loaded" | "pending"
   "filter_model_path": "<...>/model/model_binary/filter.tflite"
 }
@@ -57,6 +63,8 @@ la documentación interactiva vive en `http://localhost:8000/docs`.
 ```jsonc
 {
   "job_id": "uuid",
+  "mode": "prod",                 // "demo" | "prod"
+  "demo": false,                  // true si el reporte es sintético
   "aruco": {
     "detected": true,
     "marker_id": 6,
@@ -87,6 +95,19 @@ la documentación interactiva vive en `http://localhost:8000/docs`.
     "confidence": 0.42,
     "patches": []
   },
+  "inclination": {
+    "detected": true,
+    "method": "canny_hough",
+    "tilt_deg": 2.9,              // inclinación aparente respecto al eje
+    "tilt_signed_deg": 2.9,
+    "angle_deg": 92.9,
+    "reference": "vertical",      // "vertical" | "horizontal" | "auto"
+    "confidence": 0.93,           // proporción de longitud inlier
+    "lines_count": 13,
+    "inlier_lines": 11,
+    "reliable": true,
+    "message": "Inclinación estimada con Canny + Hough."
+  },
   // Contexto de la inspección (Sección 1)
   "surface": "piso",              // "techo" | "piso" | "pared" | "indeterminado"
   "surface_tilt_deg": 0.0,        // ángulo del dispositivo respecto a la horizontal
@@ -94,6 +115,12 @@ la documentación interactiva vive en `http://localhost:8000/docs`.
   "location": "columna C3, 1.2 m"
 }
 ```
+
+### `POST /api/inclination` → `ElementInclination`
+
+Misma estructura que el bloque `inclination` de `AnalyzeResponse`. La medición
+es **aparente respecto al eje de la imagen/marcador**; no es una inclinación
+absoluta respecto a la gravedad.
 
 ### `POST /api/filter` → `FilterResult`
 Igual que el bloque `filter` de `AnalyzeResponse`, incluyendo `patches` con
@@ -106,7 +133,7 @@ Protocolo común: mensajes JSON `{ "type", "status", "payload" }`.
 | Ruta | Uso |
 |------|-----|
 | `/ws/camera` | Transmisión de frames + sensor en tiempo real; responde `frame_ack` con la estabilidad. |
-| `/ws/analyze` | Ejecuta el pipeline y emite `progress` por etapa (`1_captura`, `2_aruco`, `2_preprocesamiento`, `3_filtro`) y luego `result`. |
+| `/ws/analyze` | Ejecuta el pipeline y emite `progress` por etapa (`1_captura`, `2_aruco`, `2_preprocesamiento`, `2_inclinacion`, `3_filtro`) y luego `result`. |
 
 Ejemplo del flujo `/ws/analyze`:
 ```jsonc
@@ -115,8 +142,9 @@ Ejemplo del flujo `/ws/analyze`:
 // servidor → cliente (secuencial)
 { "type": "progress", "status": "ok", "payload": { "job_id": "u", "step": "1_captura", "status": 0.1 } }
 { "type": "progress", "status": "ok", "payload": { "job_id": "u", "step": "2_aruco", "status": 0.4 } }
+{ "type": "progress", "status": "ok", "payload": { "job_id": "u", "step": "2_inclinacion", "status": 0.7 } }
 { "type": "progress", "status": "ok", "payload": { "job_id": "u", "step": "3_filtro", "status": 0.8 } }
-{ "type": "result",   "status": "ok", "payload": { "job_id": "u", "aruco": {}, "preprocess": {}, "filter": {} } }
+{ "type": "result",   "status": "ok", "payload": { "job_id": "u", "aruco": {}, "preprocess": {}, "filter": {}, "inclination": {} } }
 ```
 
 ## Frontend — cliente actual

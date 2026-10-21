@@ -46,7 +46,7 @@ cp .env.example .env   # ajusta los valores a tu entorno
 
 | Variable | Default | Descripción |
 |----------|---------|-------------|
-| `APP_MODE` | `demo` | `demo` → reporte sintético; `prod` → pipeline real (sin mock). |
+| `APP_MODE` | `demo` | `demo` → reporte sintético; `prod` → inferencia real (sin mock). |
 | `API_HOST` | `0.0.0.0` | Interfaz de escucha del backend. |
 | `API_PORT` | `8000` | Puerto del backend. |
 | `LOG_LEVEL` | `info` | Nivel de logging. |
@@ -60,20 +60,68 @@ cp .env.example .env   # ajusta los valores a tu entorno
 > El frontend consume únicamente `POST /api/analyze` (ver
 > [`api_contrato.md`](../tecnico/api_contrato.md)).
 
+## Inferencia real desde la app
+
+1. Verifica que el modelo local cargue y prediga:
+
+```bash
+python backend/scripts/verificar_inferencia.py
+```
+
+2. En el `.env` de la raíz:
+
+```bash
+APP_MODE=prod
+EXPO_PUBLIC_API_URL=http://<IP-LAN-de-tu-equipo>:8000
+```
+
+3. Levanta el backend en todas las interfaces:
+
+```bash
+cd backend
+uvicorn app:app --host 0.0.0.0 --port 8000
+```
+
+4. Reinicia Metro/Expo después de cambiar el `.env` y abre la app:
+
+```bash
+cd frontend
+npm start
+```
+
+5. En el menú de la app pulsa **Probar conexión**. Debe mostrar
+   `inferencia real` y `Modelo: cargado`. El reporte incluye un badge de modo y
+   la inclinación del elemento.
+
+> `filter.tflite` no se versiona. Si no existe, `/api/health` reporta
+> `filter_model: pending` y `/api/analyze` responde `SIN_MODELO`.
+
 ## EDA (cuadernos)
 
 ```bash
-cd EDA
-# opcional: definir ruta de datos
-export EDA_DATA_DIR=/ruta/a/data
-jupyter notebook notebooks/
+python -m venv .venv
+source .venv/bin/activate
+pip install -r EDA/requirements.txt
+```
+
+El cuaderno 01 ya está versionado con salidas reales de METU (muestra 2,000 por
+clase). Para reproducirlo desde la raíz:
+
+```bash
+EDA_DATA_DIR=EDA/data EDA_SAMPLE_PER_CLASS=2000 \
+python -m nbconvert --to notebook --execute --inplace \
+  EDA/notebooks/01_clasificacion_grietas.ipynb
 ```
 
 Los cuadernos cargan el dataset real desde `EDA/data/` si existe; si no, entran
 en **modo simulación** claramente etiquetado. Estructura esperada:
 
-- `EDA/data/metu/Positive|Negative/*.jpg`  o  `EDA/data/sdnet2018/{C,D,M}/{train,test}/{crack,uncracked}/*.png`
+- `EDA/data/metu/{train,validation,test}/{Positive,Negative}/*.jpg`
+- `EDA/data/sdnet2018/{C,D,M}/{train,test}/{crack,uncracked}/*.png`
 - `EDA/data/crack500/{images,masks}/*`  o  `EDA/data/cfd/*`
+
+El cuaderno 02 permanece en simulación porque no hay máscaras reales de
+segmentación versionadas.
 
 ## Convenciones
 
@@ -91,4 +139,6 @@ en **modo simulación** claramente etiquetado. Estructura esperada:
 
 - Backend: levantar `uvicorn` y probar `/api/health` y `/api/analyze` (demo).
 - Frontend: `npx tsc --noEmit` para chequeo de tipos.
-- EDA: re-ejecutar los cuadernos con `jupyter nbconvert --execute`.
+- EDA: re-ejecutar el cuaderno con `python -m nbconvert --execute`.
+- Inferencia: `python backend/scripts/verificar_inferencia.py` y
+  `python backend/scripts/prediccion_ejemplo.py`.
