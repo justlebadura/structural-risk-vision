@@ -11,7 +11,7 @@ interface MenuScreenProps {
 
 const STEPS = [
   { icon: 'location-outline', text: 'Indica dónde está la grieta (columna, viga, muro…)' },
-  { icon: 'scan-outline', text: 'Encuadra la grieta junto al marcador ArUco' },
+  { icon: 'scan-outline', text: 'Encuadra la grieta y el ArUco con luz difusa, sin sombras duras' },
   { icon: 'analytics-outline', text: 'Obtén el veredicto y la vista cenital' },
 ] as const;
 

@@ -45,7 +45,7 @@ export function CameraOverlay({ torchOn, onToggleTorch, onBack }: CameraOverlayP
           <View style={[styles.corner, styles.bottomLeft]} />
           <View style={[styles.corner, styles.bottomRight]} />
         </View>
-        <Text style={styles.guideText}>Encuadra la grieta y el marcador ArUco</Text>
+        <Text style={styles.guideText}>Encuadra la grieta y el ArUco · evita sombras duras</Text>
       </View>
     </View>
   );
