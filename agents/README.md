@@ -10,6 +10,11 @@ documentos técnicos, datos y guías.
 
 ## Índice
 
+### Avance del proyecto
+| Documento | Contenido |
+|-----------|-----------|
+| [`avance_recursos.md`](avance_recursos.md) | Inventario y trazabilidad de recursos (repos, documentos, código, notebooks, datasets, modelos, resultados). |
+
 ### Visión (qué y por qué)
 | Documento | Contenido |
 |-----------|-----------|
@@ -45,12 +50,13 @@ documentos técnicos, datos y guías.
 
 ```
 agents/
-├── README.md            # este índice
-├── config/settings.json # configuración de agente (no es documentación)
-├── vision/              # objetivos, atractivo, presentación
-├── tecnico/             # arquitectura, estructura, API, modelos, stats
-├── datos/               # datasets y estadísticas
-└── guias/               # desarrollo, entrenamiento, graphify
+├── README.md              # este índice
+├── avance_recursos.md     # inventario y trazabilidad de recursos
+├── config/settings.json   # configuración de agente (no es documentación)
+├── vision/                # objetivos, atractivo, presentación
+├── tecnico/               # arquitectura, estructura, API, modelos, stats
+├── datos/                 # datasets y estadísticas
+└── guias/                 # desarrollo, entrenamiento, graphify
 ```
 
 ## Mapa rápido del repositorio
